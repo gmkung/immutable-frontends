@@ -28,7 +28,8 @@ const Submit = () => {
           </h1>
           
           <p className="max-w-2xl mx-auto text-muted-foreground backdrop-blur-sm bg-white/30 p-4 rounded-xl border border-white/20">
-            Submit a new frontend to the registry. Your submission will be stored on IPFS and added to the blockchain registry.
+            Submit a new frontend to the registry. Your submission will be stored on IPFS and added to the blockchain registry. 
+            A deposit of <span className="font-medium text-hawaii-blue">0.435 ETH</span> is required for submission.
           </p>
         </Container>
         

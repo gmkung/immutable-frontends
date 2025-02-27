@@ -140,7 +140,7 @@ export function FrontendForm() {
       await connectWallet();
       
       // Submit to registry
-      toast.info("Please approve transaction in your wallet");
+      toast.info("Please approve transaction in your wallet (requires 0.435 ETH deposit)");
       const txHash = await submitToRegistry(ipfsHash);
       
       setStatus({
@@ -173,6 +173,7 @@ export function FrontendForm() {
         <CardTitle className="text-2xl">Submit a New Frontend</CardTitle>
         <CardDescription>
           Add a decentralized frontend to the registry. All information will be permanently stored on IPFS and verified by the community.
+          <span className="block mt-1 font-medium text-hawaii-teal">A deposit of 0.435 ETH is required for this submission.</span>
         </CardDescription>
       </CardHeader>
       

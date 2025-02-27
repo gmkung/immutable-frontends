@@ -1,4 +1,5 @@
 
+
 import { Web3Error } from "@/types";
 import { toast } from "sonner";
 
@@ -84,7 +85,7 @@ export async function submitToRegistry(ipfsPath: string): Promise<string> {
     const gasPriceString = gasPrice.toString();
     
     // Submit transaction
-    const deposit = web3.utils.toWei("0.1", "ether"); // Example deposit amount - adjust as needed
+    const deposit = web3.utils.toWei("0.435", "ether"); // Updated deposit amount to 0.435 ETH
     
     const txReceipt = await contract.methods.addItem(formattedPath).send({
       from,
@@ -154,3 +155,4 @@ export async function switchToMainnet(): Promise<boolean> {
     return false;
   }
 }
+
