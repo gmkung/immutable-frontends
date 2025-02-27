@@ -2,7 +2,7 @@
 import { Header } from "@/components/Header";
 import { FrontendForm } from "@/components/FrontendForm";
 import { Container } from "@/components/ui/container";
-import { PalmTree, Waves, Database } from "lucide-react";
+import { Palmtree, Waves, Database } from "lucide-react";
 
 const Submit = () => {
   return (
@@ -13,7 +13,7 @@ const Submit = () => {
         <Container className="text-center mb-12 animate-slide-down">
           <div className="relative inline-flex items-center justify-center mb-6">
             <div className="absolute -top-1 -left-1">
-              <PalmTree className="h-6 w-6 text-hawaii-green animate-wave" />
+              <Palmtree className="h-6 w-6 text-hawaii-green animate-wave" />
             </div>
             <div className="absolute -bottom-1 -right-1">
               <Waves className="h-6 w-6 text-hawaii-teal animate-wave" />

@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getCurrentAccount, formatWalletAddress, connectWallet } from "@/lib/web3";
-import { Database, PlusCircle, Wallet, Waves, PalmTree } from "lucide-react";
+import { Database, PlusCircle, Wallet, Waves, Palmtree } from "lucide-react";
 import { toast } from "sonner";
 
 export function Header() {
@@ -65,7 +65,7 @@ export function Header() {
         <div className="flex items-center space-x-1">
           <div className="relative">
             <Waves className="h-6 w-6 text-hawaii-teal animate-wave" />
-            <PalmTree className="h-4 w-4 text-hawaii-green absolute -top-0.5 -right-1.5" />
+            <Palmtree className="h-4 w-4 text-hawaii-green absolute -top-0.5 -right-1.5" />
           </div>
           <Link to="/" className="font-medium text-lg flex items-center gap-x-1.5">
             <span className="gradient-text">Decentralized Frontends</span>

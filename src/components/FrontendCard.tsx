@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ExternalLink, Copy, Database, Github, FileCode, Waves, Circuit } from "lucide-react";
+import { ExternalLink, Copy, Database, Github, FileCode, Waves, CircuitBoard } from "lucide-react";
 import { useState } from "react";
 
 interface FrontendCardProps {
@@ -84,7 +84,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
           </div>
           
           <div className="flex items-center gap-2 text-sm">
-            <Circuit className="h-4 w-4 text-hawaii-teal" />
+            <CircuitBoard className="h-4 w-4 text-hawaii-teal" />
             <span className="font-medium mr-1">Commit:</span>
             <span className="ipfs-hash flex-1">{truncateMiddle(commitHash, 7, 0)}</span>
             {versionTag && (
