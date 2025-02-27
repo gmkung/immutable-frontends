@@ -2,25 +2,40 @@
 import { Header } from "@/components/Header";
 import { FrontendForm } from "@/components/FrontendForm";
 import { Container } from "@/components/ui/container";
-import { Palmtree, Waves, Database } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Palmtree, Waves, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Submit = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
       
       <main className="flex-1 pt-24 pb-16 wave-bg">
         <Container className="text-center mb-12 animate-slide-down">
-          <div className="relative inline-flex items-center justify-center mb-6">
-            <div className="absolute -top-1 -left-1">
-              <Palmtree className="h-6 w-6 text-hawaii-green animate-wave" />
+          <div className="flex items-center justify-center mb-6">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/')} 
+              className="absolute left-4 md:left-8 top-24 flex items-center text-hawaii-blue hover:text-hawaii-blue/80 hover:bg-hawaii-blue/10"
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Back to List
+            </Button>
+            
+            <div className="relative inline-flex items-center justify-center">
+              <div className="absolute -top-1 -left-1">
+                <Palmtree className="h-6 w-6 text-hawaii-green animate-wave" />
+              </div>
+              <div className="absolute -bottom-1 -right-1">
+                <Waves className="h-6 w-6 text-hawaii-teal animate-wave" />
+              </div>
+              <span className="text-xs font-semibold tracking-wider uppercase bg-hawaii-blue/10 text-hawaii-blue px-4 py-1.5 rounded-full mb-3 inline-block border border-hawaii-blue/20 backdrop-blur-sm">
+                Submit New Entry
+              </span>
             </div>
-            <div className="absolute -bottom-1 -right-1">
-              <Waves className="h-6 w-6 text-hawaii-teal animate-wave" />
-            </div>
-            <span className="text-xs font-semibold tracking-wider uppercase bg-hawaii-blue/10 text-hawaii-blue px-4 py-1.5 rounded-full mb-3 inline-block border border-hawaii-blue/20 backdrop-blur-sm">
-              Submit New Entry
-            </span>
           </div>
           
           <h1 className="text-4xl font-bold mb-4 gradient-text inline-block">
