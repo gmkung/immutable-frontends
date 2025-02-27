@@ -76,13 +76,20 @@ export async function submitToRegistry(ipfsPath: string): Promise<string> {
     const gasEstimate = await contract.methods.addItem(formattedPath).estimateGas({ from });
     const gasPrice = await web3.eth.getGasPrice();
     
+    // Calculate gas with 20% buffer and convert to string
+    const gasBigInt = BigInt(gasEstimate);
+    const gasWithBuffer = (gasBigInt * BigInt(120) / BigInt(100)).toString();
+    
+    // Convert gasPrice to string
+    const gasPriceString = gasPrice.toString();
+    
     // Submit transaction
     const deposit = web3.utils.toWei("0.1", "ether"); // Example deposit amount - adjust as needed
     
     const txReceipt = await contract.methods.addItem(formattedPath).send({
       from,
-      gas: Math.floor(gasEstimate * 1.2), // Add 20% buffer to gas estimate
-      gasPrice,
+      gas: gasWithBuffer,
+      gasPrice: gasPriceString,
       value: deposit,
     });
     
