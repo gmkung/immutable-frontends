@@ -6,7 +6,14 @@ const SUBGRAPH_URL = "https://gateway.thegraph.com/api/93280ce6389383613864ff822
 
 const QUERY = `
   query GetFrontends {
-    litems(first: 1000, where: { status: Registered }) {
+    litems(
+      first: 1000,
+      orderDirection: desc,
+      where: { 
+        status: Registered,
+        registry: "0xda03509bb770061a61615ad8fc8e1858520ebd86"
+      }
+    ) {
       __typename
       data
       itemID
