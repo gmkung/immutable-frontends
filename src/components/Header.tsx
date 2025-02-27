@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getCurrentAccount, formatWalletAddress, connectWallet } from "@/lib/web3";
-import { Database, PlusCircle, Wallet } from "lucide-react";
+import { Database, PlusCircle, Wallet, Waves, PalmTree } from "lucide-react";
 import { toast } from "sonner";
 
 export function Header() {
@@ -63,15 +63,18 @@ export function Header() {
     >
       <Container className="flex items-center justify-between">
         <div className="flex items-center space-x-1">
-          <Database className="h-5 w-5 text-primary" />
-          <Link to="/" className="font-medium text-lg">
-            <span>Decentralized Frontends</span>
+          <div className="relative">
+            <Waves className="h-6 w-6 text-hawaii-teal animate-wave" />
+            <PalmTree className="h-4 w-4 text-hawaii-green absolute -top-0.5 -right-1.5" />
+          </div>
+          <Link to="/" className="font-medium text-lg flex items-center gap-x-1.5">
+            <span className="gradient-text">Decentralized Frontends</span>
           </Link>
         </div>
         
         <div className="flex items-center gap-3">
           {location.pathname !== "/submit" && (
-            <Button asChild variant="outline" size="sm" className="gap-1">
+            <Button asChild variant="outline" size="sm" className="gap-1 neon-border">
               <Link to="/submit">
                 <PlusCircle className="h-4 w-4 mr-1" />
                 Submit Frontend
@@ -82,7 +85,10 @@ export function Header() {
           <Button
             variant={account ? "outline" : "default"}
             size="sm"
-            className="gap-1"
+            className={cn(
+              "gap-1", 
+              account ? "neon-border" : "futuristic-button"
+            )}
             onClick={handleConnect}
           >
             <Wallet className="h-4 w-4 mr-1" />
@@ -92,4 +98,8 @@ export function Header() {
       </Container>
     </header>
   );
+
+  function cn(...classes: string[]) {
+    return classes.filter(Boolean).join(' ');
+  }
 }

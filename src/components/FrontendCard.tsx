@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ExternalLink, Copy, Database, Github, FileCode } from "lucide-react";
+import { ExternalLink, Copy, Database, Github, FileCode, Waves, Circuit } from "lucide-react";
 import { useState } from "react";
 
 interface FrontendCardProps {
@@ -30,10 +30,11 @@ export function FrontendCard({ item }: FrontendCardProps) {
   
   return (
     <Card className="glass-card overflow-hidden animate-slide-up w-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 relative">
         <div className="flex items-start justify-between">
           <div>
-            <Badge variant="outline" className="mb-2 bg-secondary/30 backdrop-blur-sm">
+            <Badge variant="outline" className="mb-2 bg-hawaii-blue/10 text-hawaii-blue backdrop-blur-sm border-hawaii-blue/20">
+              <Waves className="h-3 w-3 mr-1" />
               {networkName}
             </Badge>
             <CardTitle className="text-xl font-semibold">{name}</CardTitle>
@@ -44,10 +45,10 @@ export function FrontendCard({ item }: FrontendCardProps) {
         </div>
       </CardHeader>
       
-      <CardContent className="pb-4 space-y-3">
+      <CardContent className="pb-4 space-y-3 relative z-10">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
-            <Database className="h-4 w-4 opacity-70" />
+            <Database className="h-4 w-4 text-hawaii-teal" />
             <span className="font-medium mr-1">Locator ID:</span>
             <span className="ipfs-hash flex-1">{truncateMiddle(locatorId, 8, 6)}</span>
             <TooltipProvider>
@@ -70,24 +71,24 @@ export function FrontendCard({ item }: FrontendCardProps) {
           </div>
           
           <div className="flex items-center gap-2 text-sm">
-            <Github className="h-4 w-4 opacity-70" />
+            <Github className="h-4 w-4 text-hawaii-teal" />
             <span className="font-medium mr-1">Repository:</span>
             <a 
               href={repoUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-primary hover:underline flex-1 truncate"
+              className="text-hawaii-blue hover:underline flex-1 truncate"
             >
               {repoUrl}
             </a>
           </div>
           
           <div className="flex items-center gap-2 text-sm">
-            <FileCode className="h-4 w-4 opacity-70" />
+            <Circuit className="h-4 w-4 text-hawaii-teal" />
             <span className="font-medium mr-1">Commit:</span>
             <span className="ipfs-hash flex-1">{truncateMiddle(commitHash, 7, 0)}</span>
             {versionTag && (
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className="ml-2 bg-hawaii-sand/10 text-hawaii-orange border-hawaii-sand/20">
                 {versionTag}
               </Badge>
             )}
@@ -95,7 +96,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         </div>
         
         {isExpanded && additionalInfo !== "N/A" && (
-          <div className="mt-4 pt-4 border-t border-border/40 text-sm">
+          <div className="mt-4 pt-4 border-t border-hawaii-teal/10 text-sm">
             <h4 className="font-medium mb-2">Additional Information</h4>
             <div className="whitespace-pre-wrap text-muted-foreground text-xs">
               {additionalInfo}
@@ -104,7 +105,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         )}
       </CardContent>
       
-      <CardFooter className="flex justify-between items-center pt-2 text-xs text-muted-foreground">
+      <CardFooter className="flex justify-between items-center pt-2 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10">
         <div>
           {submissionTime && (
             <span>Listed {formatDate(submissionTime)}</span>
@@ -116,7 +117,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs"
+              className="h-7 text-xs hover:text-hawaii-teal"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               {isExpanded ? "Show less" : "Show more"}
@@ -124,9 +125,9 @@ export function FrontendCard({ item }: FrontendCardProps) {
           )}
           
           <Button
-            variant="secondary"
+            variant="default"
             size="sm"
-            className="h-7 text-xs"
+            className="h-7 text-xs futuristic-button"
             onClick={() => window.open(ipfsGatewayUrl, "_blank")}
           >
             <ExternalLink className="h-3.5 w-3.5 mr-1" />

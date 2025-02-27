@@ -16,7 +16,7 @@ export function Container({
   return (
     <Component
       className={cn(
-        "w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in",
+        "w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in wave-bg",
         className
       )}
     >

@@ -7,54 +7,71 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
+    --background: 190 95% 98%; /* Light blue-tinted background */
+    --foreground: 217 33% 17%; /* Dark blue-gray text */
     
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 217 33% 17%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 217 33% 17%;
     
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 196 94% 43%; /* Bright teal/cyan - ocean color */
+    --primary-foreground: 210 40% 98%;
     
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 219 100% 89%; /* Soft light blue */
+    --secondary-foreground: 217 33% 17%;
     
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
     
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 39 100% 50%; /* Vibrant golden/sand accent */
+    --accent-foreground: 217 33% 17%;
     
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
     
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5% 64.9%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 196 94% 43%;
     
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
   
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02";
+    background-image: linear-gradient(to right, rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+                     linear-gradient(to bottom, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
   }
   
   ::selection {
-    @apply bg-primary/20;
+    @apply bg-hawaii-teal/20;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white/40 dark:bg-black/40 border border-white/20 dark:border-black/20 backdrop-blur-xl shadow-glass transition-all duration-300;
+    @apply bg-white/60 border border-white/20 backdrop-blur-xl shadow-glass transition-all duration-300 relative overflow-hidden;
+  }
+  
+  .glass-card::before {
+    content: "";
+    @apply absolute inset-0 bg-gradient-to-br from-white/30 to-white/5 opacity-70 pointer-events-none;
+  }
+  
+  .glass-card::after {
+    content: "";
+    @apply absolute top-0 left-0 right-0 h-[2px] bg-gradient-hawaii opacity-50;
   }
   
   .glass-card:hover {
-    @apply shadow-glass-hover;
+    @apply shadow-glass-hover border-white/30 transform;
+  }
+  
+  .glass-card:hover::after {
+    @apply opacity-80;
   }
   
   .ipfs-hash {
@@ -86,6 +103,38 @@
   
   .link-underline {
     @apply relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-0 after:bg-current after:transition-all after:duration-300 hover:after:w-full;
+  }
+  
+  .wave-bg {
+    @apply relative;
+  }
+  
+  .wave-bg::before {
+    content: "";
+    @apply absolute inset-0 bg-wave-pattern opacity-5 pointer-events-none;
+  }
+  
+  .futuristic-button {
+    @apply relative overflow-hidden bg-gradient-hawaii text-white px-6 py-2.5 rounded-lg font-medium
+    shadow-neon transition-all duration-300 hover:shadow-neon-hover hover:scale-105;
+  }
+  
+  .futuristic-button::before {
+    content: "";
+    @apply absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300;
+  }
+  
+  .futuristic-button:hover::before {
+    @apply opacity-20;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-hawaii bg-clip-text text-transparent animate-flow;
+    background-size: 300% 300%;
+  }
+  
+  .neon-border {
+    @apply border border-hawaii-teal/50 shadow-neon;
   }
 }
 
@@ -122,4 +171,17 @@
   opacity: 0;
   transform: translateY(-8px);
   transition: opacity 400ms, transform 400ms;
+}
+
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
