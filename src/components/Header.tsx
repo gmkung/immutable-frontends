@@ -68,7 +68,7 @@ export function Header() {
             <Palmtree className="h-4 w-4 text-hawaii-green absolute -top-0.5 -right-1.5" />
           </div>
           <Link to="/" className="font-medium text-lg flex items-center gap-x-1.5">
-            <span className="gradient-text">Decentralized Frontends</span>
+            <span className="gradient-text">Immutable Frontends</span>
           </Link>
         </div>
         
