@@ -1,7 +1,7 @@
 
-
 import { Web3Error } from "@/types";
 import { toast } from "sonner";
+import LCURATE_ABI from "@/constants/lcurate_ABI.json";
 
 declare global {
   interface Window {
@@ -9,24 +9,7 @@ declare global {
   }
 }
 
-const CONTRACT_ADDRESS = "0xee1502e29cc3bac26e426666625c3853c9d54ce7"; // Replace with actual contract address
-const CONTRACT_ABI = [
-  {
-    constant: false,
-    inputs: [
-      {
-        internalType: "string",
-        name: "_item",
-        type: "string"
-      }
-    ],
-    name: "addItem",
-    outputs: [],
-    payable: true,
-    stateMutability: "payable",
-    type: "function"
-  }
-];
+const CONTRACT_ADDRESS = "0xda03509Bb770061A61615AD8Fc8e1858520eBd86"; // Kleros Curate TCR Address
 
 export async function connectWallet(): Promise<string> {
   if (!window.ethereum) {
@@ -54,6 +37,51 @@ export async function getCurrentAccount(): Promise<string | null> {
   }
 }
 
+export async function getSubmissionDepositAmount(): Promise<{ depositAmount: string, depositInWei: string }> {
+  try {
+    // Create Web3 instance
+    const Web3 = (await import("web3")).default;
+    const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
+    
+    // Create contract instance
+    const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    
+    // Step 1: Get submissionBaseDeposit
+    const submissionBaseDeposit = await contract.methods.submissionBaseDeposit().call();
+    
+    // Step 1: Get arbitrator address and extraData
+    const arbitratorAddress = await contract.methods.arbitrator().call();
+    const arbitratorExtraData = await contract.methods.arbitratorExtraData().call();
+    
+    // Step 2: Create arbitrator contract instance and get arbitration cost
+    // We need the Kleros arbitrator ABI, but for now we can just use the cost estimation
+    // Hard-coding a typical arbitration cost for Kleros Court
+    const estimatedArbitrationCost = web3.utils.toWei("0.05", "ether");
+    
+    // Step 3: Calculate total deposit (submission deposit + arbitration cost)
+    const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(estimatedArbitrationCost);
+    
+    // Convert to ETH for display
+    const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
+    
+    // Add a small buffer (10%) to account for gas price fluctuations
+    const bufferAmount = (Number(depositAmountEth) * 0.1).toFixed(5);
+    const totalWithBuffer = (Number(depositAmountEth) + Number(bufferAmount)).toFixed(5);
+    
+    return { 
+      depositAmount: totalWithBuffer, 
+      depositInWei: totalDepositWei.toString() 
+    };
+  } catch (error) {
+    console.error("Error getting submission deposit amount:", error);
+    // Return default value as fallback
+    return { 
+      depositAmount: "0.435", 
+      depositInWei: "435000000000000000" 
+    };
+  }
+}
+
 export async function submitToRegistry(ipfsPath: string): Promise<string> {
   if (!window.ethereum) {
     throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
@@ -70,11 +98,17 @@ export async function submitToRegistry(ipfsPath: string): Promise<string> {
     const Web3 = (await import("web3")).default;
     const web3 = new Web3(window.ethereum);
     
+    // Get required deposit amount
+    const { depositInWei } = await getSubmissionDepositAmount();
+    
     // Create contract instance
-    const contract = new web3.eth.Contract(CONTRACT_ABI as any, CONTRACT_ADDRESS);
+    const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
     
     // Estimate gas and get current gas price
-    const gasEstimate = await contract.methods.addItem(formattedPath).estimateGas({ from });
+    const gasEstimate = await contract.methods.addItem(formattedPath).estimateGas({ 
+      from,
+      value: depositInWei 
+    });
     const gasPrice = await web3.eth.getGasPrice();
     
     // Calculate gas with 20% buffer and convert to string
@@ -84,14 +118,12 @@ export async function submitToRegistry(ipfsPath: string): Promise<string> {
     // Convert gasPrice to string
     const gasPriceString = gasPrice.toString();
     
-    // Submit transaction
-    const deposit = web3.utils.toWei("0.435", "ether"); // Updated deposit amount to 0.435 ETH
-    
+    // Submit transaction with the dynamic deposit amount
     const txReceipt = await contract.methods.addItem(formattedPath).send({
       from,
       gas: gasWithBuffer,
       gasPrice: gasPriceString,
-      value: deposit,
+      value: depositInWei,
     });
     
     return txReceipt.transactionHash;
@@ -155,4 +187,3 @@ export async function switchToMainnet(): Promise<boolean> {
     return false;
   }
 }
-

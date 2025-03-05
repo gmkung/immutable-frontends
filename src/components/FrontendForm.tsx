@@ -1,12 +1,11 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ItemData, SubmissionStatus } from "@/types";
 import { validateForm, stringToBuffer } from "@/lib/utils";
 import { uploadJSONToIPFS } from "@/lib/ipfs";
-import { connectWallet, submitToRegistry, handleWeb3Error, switchToMainnet } from "@/lib/web3";
+import { connectWallet, submitToRegistry, handleWeb3Error, switchToMainnet, getSubmissionDepositAmount } from "@/lib/web3";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -37,6 +36,26 @@ export function FrontendForm() {
     error: null,
     txHash: null,
   });
+  
+  const [depositAmount, setDepositAmount] = useState<string>("0.435");
+  const [isLoadingDeposit, setIsLoadingDeposit] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const fetchDepositAmount = async () => {
+      try {
+        setIsLoadingDeposit(true);
+        const { depositAmount } = await getSubmissionDepositAmount();
+        setDepositAmount(depositAmount);
+      } catch (error) {
+        console.error("Error fetching deposit amount:", error);
+        // Keep the default value
+      } finally {
+        setIsLoadingDeposit(false);
+      }
+    };
+    
+    fetchDepositAmount();
+  }, []);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -140,7 +159,7 @@ export function FrontendForm() {
       await connectWallet();
       
       // Submit to registry
-      toast.info("Please approve transaction in your wallet (requires 0.1435 ETH deposit)");
+      toast.info(`Please approve transaction in your wallet (requires ${depositAmount} ETH deposit)`);
       const txHash = await submitToRegistry(ipfsHash);
       
       setStatus({
@@ -173,7 +192,16 @@ export function FrontendForm() {
         <CardTitle className="text-2xl">Submit a New Frontend</CardTitle>
         <CardDescription>
           Add a decentralized frontend to the registry. All information will be permanently stored on IPFS and verified by the community.
-          <span className="block mt-1 font-medium text-hawaii-teal">A deposit of 0.1435 ETH is required for this submission.</span>
+          <span className="block mt-1 font-medium text-hawaii-teal">
+            {isLoadingDeposit ? (
+              <span className="flex items-center">
+                <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                Loading required deposit amount...
+              </span>
+            ) : (
+              <>A deposit of <span className="font-semibold text-hawaii-blue">{depositAmount} ETH</span> is required for this submission.</>
+            )}
+          </span>
         </CardDescription>
       </CardHeader>
       
@@ -335,7 +363,7 @@ export function FrontendForm() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={status.loading}
+                disabled={status.loading || isLoadingDeposit}
               >
                 {status.loading ? (
                   <>

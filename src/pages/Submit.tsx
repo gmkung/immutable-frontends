@@ -1,13 +1,33 @@
 
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { FrontendForm } from "@/components/FrontendForm";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { Palmtree, Waves, ChevronLeft } from "lucide-react";
+import { Palmtree, Waves, ChevronLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getSubmissionDepositAmount } from "@/lib/web3";
 
 const Submit = () => {
   const navigate = useNavigate();
+  const [depositAmount, setDepositAmount] = useState<string>("0.435");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchDepositAmount = async () => {
+      try {
+        setIsLoading(true);
+        const { depositAmount } = await getSubmissionDepositAmount();
+        setDepositAmount(depositAmount);
+      } catch (error) {
+        console.error("Error fetching deposit amount:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDepositAmount();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,7 +64,16 @@ const Submit = () => {
           
           <p className="max-w-2xl mx-auto text-muted-foreground backdrop-blur-sm bg-white/30 p-4 rounded-xl border border-white/20">
             Submit a new frontend to the registry. Your submission will be stored on IPFS and added to the blockchain registry. 
-            A deposit of <span className="font-medium text-hawaii-blue">0.435 ETH</span> is required for submission.
+            {isLoading ? (
+              <span className="font-medium flex items-center justify-center gap-2 mt-1 text-hawaii-blue">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading deposit amount...
+              </span>
+            ) : (
+              <span className="font-medium text-hawaii-blue block mt-1">
+                A deposit of <span className="font-semibold">{depositAmount} ETH</span> is required for submission.
+              </span>
+            )}
           </p>
         </Container>
         
