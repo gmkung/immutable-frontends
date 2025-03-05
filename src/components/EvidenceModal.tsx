@@ -1,11 +1,18 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadJSONToIPFS } from "@/lib/ipfs";
 import { toast } from "sonner";
+import { getRemovalDepositAmount } from "@/lib/web3";
+
+interface DepositBreakdown {
+  removalBaseDeposit: string;
+  arbitrationCost: string;
+  total: string;
+}
 
 interface EvidenceModalProps {
   isOpen: boolean;
@@ -27,6 +34,28 @@ export function EvidenceModal({
   const [evidenceTitle, setEvidenceTitle] = useState("");
   const [evidenceDescription, setEvidenceDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [depositBreakdown, setDepositBreakdown] = useState<DepositBreakdown | null>(null);
+  const [isLoadingDeposit, setIsLoadingDeposit] = useState(false);
+
+  useEffect(() => {
+    // Only fetch deposit amount when modal is open and action is "remove"
+    if (isOpen && action === "remove") {
+      const fetchDepositAmount = async () => {
+        try {
+          setIsLoadingDeposit(true);
+          const depositInfo = await getRemovalDepositAmount();
+          setDepositBreakdown(depositInfo.breakdown);
+        } catch (error) {
+          console.error("Failed to fetch deposit amount:", error);
+          toast.error("Failed to fetch deposit information");
+        } finally {
+          setIsLoadingDeposit(false);
+        }
+      };
+
+      fetchDepositAmount();
+    }
+  }, [isOpen, action]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +84,6 @@ export function EvidenceModal({
 
       // Pass the IPFS URI back to the parent component
       onEvidenceSubmit(ipfsURI);
-
-
 
     } catch (error) {
       console.error("Failed to upload evidence:", error);
@@ -103,6 +130,36 @@ export function EvidenceModal({
               required
             />
           </div>
+          
+          {action === "remove" && (
+            <div className="p-4 bg-secondary/30 rounded-md">
+              <h3 className="text-sm font-medium mb-2">Deposit Required:</h3>
+              {isLoadingDeposit ? (
+                <div className="text-sm text-muted-foreground">Loading deposit information...</div>
+              ) : depositBreakdown ? (
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Base Deposit:</span>
+                    <span>{depositBreakdown.removalBaseDeposit} ETH</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Arbitration Cost:</span>
+                    <span>{depositBreakdown.arbitrationCost} ETH</span>
+                  </div>
+                  <div className="border-t pt-1 mt-1 flex justify-between font-medium">
+                    <span>Total:</span>
+                    <span>{depositBreakdown.total} ETH</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-muted-foreground">Failed to load deposit information</div>
+              )}
+              <p className="mt-2 text-xs text-muted-foreground">
+                This deposit will be required to submit your removal request. You'll be prompted to approve this transaction in your wallet.
+              </p>
+            </div>
+          )}
+          
           <DialogFooter>
             <Button
               type="button"
