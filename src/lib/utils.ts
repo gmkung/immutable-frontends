@@ -37,9 +37,7 @@ export function getIPFSGatewayURL(hash: string): string {
   
   // List of reliable IPFS gateways
   const gateways = [
-    'https://ipfs.io/ipfs/',
-    'https://cloudflare-ipfs.com/ipfs/',
-    'https://gateway.pinata.cloud/ipfs/',
+    'https://ipfs.io/ipfs/'
   ];
   
   // Select a random gateway for load distribution
