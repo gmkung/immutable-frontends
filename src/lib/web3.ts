@@ -530,7 +530,14 @@ export async function challengeRequest(itemID: string): Promise<string> {
     
     // Get item status to determine which deposit amount to use
     const item = await contract.methods.items(itemID).call();
-    const itemStatus = parseInt(item.status);
+    if (!item) {
+      throw new Error("Failed to retrieve item information");
+    }
+    
+    const itemStatus = item.status ? parseInt(item.status.toString()) : null;
+    if (itemStatus === null) {
+      throw new Error("Failed to retrieve item status");
+    }
     
     // 1 = RegistrationRequested, 3 = ClearingRequested
     let depositInfo;
@@ -543,7 +550,7 @@ export async function challengeRequest(itemID: string): Promise<string> {
     }
     
     // Get the most recent request ID
-    const requestID = requestCount - 1;
+    const requestID = requestCount ? parseInt(requestCount.toString()) - 1 : 0;
     
     // Estimate gas and get current gas price
     const gasEstimate = await contract.methods.challengeRequest(itemID, requestID).estimateGas({ 
