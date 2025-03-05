@@ -448,6 +448,142 @@ export async function submitToRegistry(ipfsPath: string): Promise<string> {
   }
 }
 
+export async function removeItem(itemID: string): Promise<string> {
+  if (!window.ethereum) {
+    throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
+  }
+
+  try {
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    const from = accounts[0];
+    
+    // Create Web3 instance
+    const Web3 = (await import("web3")).default;
+    const web3 = new Web3(window.ethereum);
+    
+    // Get required deposit amount
+    const { depositInWei } = await getRemovalDepositAmount();
+    
+    // Create contract instance
+    const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    
+    // Estimate gas and get current gas price
+    const gasEstimate = await contract.methods.removeItem(itemID).estimateGas({ 
+      from,
+      value: depositInWei 
+    });
+    const gasPrice = await web3.eth.getGasPrice();
+    
+    // Calculate gas with 20% buffer and convert to string
+    const gasBigInt = BigInt(gasEstimate);
+    const gasWithBuffer = (gasBigInt * BigInt(120) / BigInt(100)).toString();
+    
+    // Convert gasPrice to string
+    const gasPriceString = gasPrice.toString();
+    
+    // Submit transaction with the dynamic deposit amount
+    const txReceipt = await contract.methods.removeItem(itemID).send({
+      from,
+      gas: gasWithBuffer,
+      gasPrice: gasPriceString,
+      value: depositInWei,
+    });
+    
+    return txReceipt.transactionHash;
+  } catch (error: any) {
+    console.error("Error removing item from registry:", error);
+    
+    // Format error for user
+    let errorMessage = "Failed to remove item from registry";
+    
+    if (error.code === 4001) {
+      errorMessage = "Transaction rejected by user";
+    } else if (error.message) {
+      errorMessage = `Error: ${error.message}`;
+    }
+    
+    throw new Error(errorMessage);
+  }
+}
+
+export async function challengeRequest(itemID: string): Promise<string> {
+  if (!window.ethereum) {
+    throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
+  }
+
+  try {
+    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+    const from = accounts[0];
+    
+    // Create Web3 instance
+    const Web3 = (await import("web3")).default;
+    const web3 = new Web3(window.ethereum);
+    
+    // Create contract instance
+    const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    
+    // Get the request ID (the latest one, index 0)
+    const requestCount = await contract.methods.getNumberOfRequests(itemID).call();
+    if (parseInt(requestCount) === 0) {
+      throw new Error("No request found for this item");
+    }
+    
+    // Get item status to determine which deposit amount to use
+    const item = await contract.methods.items(itemID).call();
+    const itemStatus = parseInt(item.status);
+    
+    // 1 = RegistrationRequested, 3 = ClearingRequested
+    let depositInfo;
+    if (itemStatus === 1) {
+      depositInfo = await getSubmissionChallengeDepositAmount();
+    } else if (itemStatus === 3) {
+      depositInfo = await getRemovalChallengeDepositAmount();
+    } else {
+      throw new Error("Item not in a challengeable state");
+    }
+    
+    // Get the most recent request ID
+    const requestID = requestCount - 1;
+    
+    // Estimate gas and get current gas price
+    const gasEstimate = await contract.methods.challengeRequest(itemID, requestID).estimateGas({ 
+      from,
+      value: depositInfo.depositInWei 
+    });
+    const gasPrice = await web3.eth.getGasPrice();
+    
+    // Calculate gas with 20% buffer and convert to string
+    const gasBigInt = BigInt(gasEstimate);
+    const gasWithBuffer = (gasBigInt * BigInt(120) / BigInt(100)).toString();
+    
+    // Convert gasPrice to string
+    const gasPriceString = gasPrice.toString();
+    
+    // Submit challenge transaction
+    const txReceipt = await contract.methods.challengeRequest(itemID, requestID).send({
+      from,
+      gas: gasWithBuffer,
+      gasPrice: gasPriceString,
+      value: depositInfo.depositInWei,
+    });
+    
+    return txReceipt.transactionHash;
+  } catch (error: any) {
+    console.error("Error challenging request:", error);
+    
+    // Format error for user
+    let errorMessage = "Failed to challenge request";
+    
+    if (error.code === 4001) {
+      errorMessage = "Transaction rejected by user";
+    } else if (error.message) {
+      errorMessage = `Error: ${error.message}`;
+    }
+    
+    throw new Error(errorMessage);
+  }
+}
+
 export function formatWalletAddress(address: string | null): string {
   if (!address) return "Not connected";
   return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;

@@ -5,8 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ExternalLink, Copy, Database, Github, CircuitBoard, Waves, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { ExternalLink, Copy, Database, Github, CircuitBoard, Waves, CheckCircle, Clock, AlertTriangle, Trash2, Ban } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { connectWallet, switchToMainnet } from "@/lib/web3";
 
 interface FrontendCardProps {
   item: LItem;
@@ -14,6 +16,7 @@ interface FrontendCardProps {
 
 export function FrontendCard({ item }: FrontendCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const props = item.metadata.props;
   const name = getPropValue(props, "Name");
@@ -45,6 +48,74 @@ export function FrontendCard({ item }: FrontendCardProps) {
   };
   
   const statusInfo = getStatusInfo(item.status);
+
+  // Handle the button click based on the status
+  const handleAction = async () => {
+    try {
+      setIsLoading(true);
+      
+      // First ensure wallet is connected and on mainnet
+      const account = await connectWallet();
+      const isMainnet = await switchToMainnet();
+      
+      if (!isMainnet) {
+        toast.error("Please switch to Ethereum Mainnet to continue");
+        setIsLoading(false);
+        return;
+      }
+
+      // Import removeItem and challengeRequest functions dynamically
+      const { removeItem, challengeRequest } = await import("@/lib/web3");
+      
+      // Different actions based on status
+      switch (item.status) {
+        case "Registered":
+          // Request to remove item
+          await removeItem(item.data);
+          toast.success("Removal request submitted successfully");
+          break;
+        case "RegistrationRequested":
+        case "ClearingRequested":
+          // Challenge the current request
+          await challengeRequest(item.data);
+          toast.success("Challenge submitted successfully");
+          break;
+        default:
+          toast.error("No action available for this status");
+      }
+    } catch (error: any) {
+      console.error("Action error:", error);
+      toast.error(error.message || "Failed to perform action");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get button text based on status
+  const getActionButtonText = () => {
+    switch (item.status) {
+      case "Registered":
+        return "Request Removal";
+      case "RegistrationRequested":
+      case "ClearingRequested":
+        return "Challenge Request";
+      default:
+        return "";
+    }
+  };
+
+  // Get button icon based on status
+  const getActionButtonIcon = () => {
+    switch (item.status) {
+      case "Registered":
+        return <Trash2 className="h-3.5 w-3.5 mr-1" />;
+      case "RegistrationRequested":
+      case "ClearingRequested":
+        return <Ban className="h-3.5 w-3.5 mr-1" />;
+      default:
+        return null;
+    }
+  };
   
   return (
     <Card className="glass-card overflow-hidden animate-slide-up w-full">
@@ -175,8 +246,31 @@ export function FrontendCard({ item }: FrontendCardProps) {
             <ExternalLink className="h-3.5 w-3.5 mr-1" />
             Open Frontend
           </Button>
+
+          {/* Render action button based on status */}
+          {item.status !== "Absent" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={handleAction}
+              disabled={isLoading || item.status === "Absent"}
+            >
+              {isLoading ? (
+                <span className="flex items-center">
+                  <span className="animate-spin mr-1">⌛</span> Processing...
+                </span>
+              ) : (
+                <>
+                  {getActionButtonIcon()}
+                  {getActionButtonText()}
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </CardFooter>
     </Card>
   );
 }
+
