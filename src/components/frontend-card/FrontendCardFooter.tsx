@@ -51,7 +51,7 @@ export function FrontendCardFooter({
           <Button
             variant="ghost"
             size="sm"
-            className="w-full h-8 text-xs hover:text-hawaii-teal flex items-center justify-center border-t border-hawaii-teal/10"
+            className="w-full h-8 text-xs hover:bg-secondary/50 hover:text-muted-foreground flex items-center justify-center border-t border-hawaii-teal/10"
             onClick={onToggleExpand}
           >
             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
