@@ -1,13 +1,22 @@
+
 import { Web3, Contract } from "web3";
 import { toast } from "sonner";
 import LCURATE_ABI from "../constants/lcurate_ABI.json";
 
+// Declare ethereum interface for TypeScript
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 // Constants
 const REGISTRY_ADDRESS = "0xbcff87C2BdC8E3e29811e7AC5A631F0CdEc9CeD8"; // Main registry address
+const CHALLENGE_PERIOD_DAYS = 7; // Default challenge period in days
 
 // Initialize Web3
-let web3: Web3;
-let registry: Contract<typeof LCURATE_ABI>;
+let web3: Web3 | null = null;
+let registry: Contract<typeof LCURATE_ABI> | null = null;
 
 async function initWeb3() {
   if (typeof window.ethereum !== 'undefined') {
@@ -31,13 +40,15 @@ async function initWeb3() {
   }
 }
 
-export async function getSubmissionDepositAmount(): Promise<string> {
+export async function getSubmissionDepositAmount() {
   if (!web3 || !registry) {
     const initialized = await initWeb3();
     if (!initialized) throw new Error("Failed to initialize Web3");
   }
 
   try {
+    if (!registry) throw new Error("Registry not initialized");
+    
     // Get the submission base deposit
     const baseDeposit = await registry.methods.submissionBaseDeposit().call();
     
@@ -45,7 +56,8 @@ export async function getSubmissionDepositAmount(): Promise<string> {
     const arbitrator = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    const arbitratorContract = new web3.eth.Contract(
+    // Create arbitrator contract instance
+    const arbitratorContract = new web3!.eth.Contract(
       // Simplified Arbitrator ABI with just the arbitrationCost function
       [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
       arbitrator
@@ -56,20 +68,35 @@ export async function getSubmissionDepositAmount(): Promise<string> {
     // Calculate total deposit required
     const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
     
-    return totalDeposit.toString();
+    // Convert from wei to ETH with 3 decimal places
+    const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
+    const formattedDeposit = parseFloat(depositInEth).toFixed(3);
+    
+    // Return formatted values for UI
+    return {
+      depositAmount: formattedDeposit,
+      breakdown: {
+        submissionBaseDeposit: web3!.utils.fromWei(baseDeposit, 'ether'),
+        arbitrationCost: web3!.utils.fromWei(arbitrationCost, 'ether'),
+        total: formattedDeposit
+      },
+      challengePeriodDays: CHALLENGE_PERIOD_DAYS
+    };
   } catch (error) {
     console.error("Error getting submission deposit amount:", error);
     throw error;
   }
 }
 
-export async function getSubmissionChallengeDepositAmount(): Promise<string> {
+export async function getSubmissionChallengeDepositAmount() {
   if (!web3 || !registry) {
     const initialized = await initWeb3();
     if (!initialized) throw new Error("Failed to initialize Web3");
   }
 
   try {
+    if (!registry) throw new Error("Registry not initialized");
+    
     // Get the submission challenge base deposit
     const baseDeposit = await registry.methods.submissionChallengeBaseDeposit().call();
     
@@ -77,7 +104,8 @@ export async function getSubmissionChallengeDepositAmount(): Promise<string> {
     const arbitrator = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    const arbitratorContract = new web3.eth.Contract(
+    // Create arbitrator contract instance
+    const arbitratorContract = new web3!.eth.Contract(
       [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
       arbitrator
     );
@@ -87,20 +115,26 @@ export async function getSubmissionChallengeDepositAmount(): Promise<string> {
     // Calculate total deposit required
     const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
     
-    return totalDeposit.toString();
+    // Convert from wei to ETH with 3 decimal places
+    const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
+    const formattedDeposit = parseFloat(depositInEth).toFixed(3);
+    
+    return formattedDeposit;
   } catch (error) {
     console.error("Error getting submission challenge deposit amount:", error);
     throw error;
   }
 }
 
-export async function getRemovalDepositAmount(): Promise<string> {
+export async function getRemovalDepositAmount() {
   if (!web3 || !registry) {
     const initialized = await initWeb3();
     if (!initialized) throw new Error("Failed to initialize Web3");
   }
 
   try {
+    if (!registry) throw new Error("Registry not initialized");
+    
     // Get the removal base deposit
     const baseDeposit = await registry.methods.removalBaseDeposit().call();
     
@@ -108,7 +142,8 @@ export async function getRemovalDepositAmount(): Promise<string> {
     const arbitrator = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    const arbitratorContract = new web3.eth.Contract(
+    // Create arbitrator contract instance
+    const arbitratorContract = new web3!.eth.Contract(
       [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
       arbitrator
     );
@@ -118,20 +153,26 @@ export async function getRemovalDepositAmount(): Promise<string> {
     // Calculate total deposit required
     const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
     
-    return totalDeposit.toString();
+    // Convert from wei to ETH with 3 decimal places
+    const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
+    const formattedDeposit = parseFloat(depositInEth).toFixed(3);
+    
+    return formattedDeposit;
   } catch (error) {
     console.error("Error getting removal deposit amount:", error);
     throw error;
   }
 }
 
-export async function getRemovalChallengeDepositAmount(): Promise<string> {
+export async function getRemovalChallengeDepositAmount() {
   if (!web3 || !registry) {
     const initialized = await initWeb3();
     if (!initialized) throw new Error("Failed to initialize Web3");
   }
 
   try {
+    if (!registry) throw new Error("Registry not initialized");
+    
     // Get the removal challenge base deposit
     const baseDeposit = await registry.methods.removalChallengeBaseDeposit().call();
     
@@ -139,7 +180,8 @@ export async function getRemovalChallengeDepositAmount(): Promise<string> {
     const arbitrator = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    const arbitratorContract = new web3.eth.Contract(
+    // Create arbitrator contract instance
+    const arbitratorContract = new web3!.eth.Contract(
       [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
       arbitrator
     );
@@ -149,7 +191,11 @@ export async function getRemovalChallengeDepositAmount(): Promise<string> {
     // Calculate total deposit required
     const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
     
-    return totalDeposit.toString();
+    // Convert from wei to ETH with 3 decimal places
+    const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
+    const formattedDeposit = parseFloat(depositInEth).toFixed(3);
+    
+    return formattedDeposit;
   } catch (error) {
     console.error("Error getting removal challenge deposit amount:", error);
     throw error;
@@ -164,7 +210,9 @@ export async function removeItem(itemID: string, evidenceURI: string): Promise<v
   }
 
   try {
-    const accounts = await web3.eth.getAccounts();
+    if (!registry) throw new Error("Registry not initialized");
+    
+    const accounts = await web3!.eth.getAccounts();
     if (!accounts || accounts.length === 0) {
       throw new Error("No connected accounts found");
     }
@@ -180,10 +228,13 @@ export async function removeItem(itemID: string, evidenceURI: string): Promise<v
       ? evidenceURI 
       : `/ipfs/${evidenceURI}`;
     
+    // Convert ETH to Wei for the transaction
+    const depositWei = web3!.utils.toWei(depositAmount, 'ether');
+    
     // Submit transaction
     await registry.methods.removeItem(itemID, formattedEvidence).send({
       from: accounts[0],
-      value: depositAmount,
+      value: depositWei,
       gas: 500000 // Gas estimate
     });
     
@@ -201,7 +252,9 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
   }
 
   try {
-    const accounts = await web3.eth.getAccounts();
+    if (!registry) throw new Error("Registry not initialized");
+    
+    const accounts = await web3!.eth.getAccounts();
     if (!accounts || accounts.length === 0) {
       throw new Error("No connected accounts found");
     }
@@ -232,10 +285,13 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
       ? evidenceURI 
       : `/ipfs/${evidenceURI}`;
     
+    // Convert ETH to Wei for the transaction
+    const depositWei = web3!.utils.toWei(depositAmount, 'ether');
+    
     // Submit transaction
     await registry.methods.challengeRequest(itemID, formattedEvidence).send({
       from: accounts[0],
-      value: depositAmount,
+      value: depositWei,
       gas: 500000 // Gas estimate
     });
     
@@ -252,26 +308,148 @@ export async function submitItem(itemString: string): Promise<void> {
   }
 
   try {
-    const accounts = await web3.eth.getAccounts();
+    if (!registry) throw new Error("Registry not initialized");
+    
+    const accounts = await web3!.eth.getAccounts();
     if (!accounts || accounts.length === 0) {
       throw new Error("No connected accounts found");
     }
 
     // Get required deposit amount
-    const depositAmount = await getSubmissionDepositAmount();
+    const { depositAmount } = await getSubmissionDepositAmount();
     if (!depositAmount) {
       throw new Error("Failed to retrieve deposit amount");
     }
 
+    // Convert ETH to Wei for the transaction
+    const depositWei = web3!.utils.toWei(depositAmount, 'ether');
+
     // Submit transaction
     await registry.methods.addItem(itemString).send({
       from: accounts[0],
-      value: depositAmount,
+      value: depositWei,
       gas: 500000 // Gas estimate
     });
-
   } catch (error) {
     console.error("Error submitting item:", error);
     throw error;
   }
+}
+
+// Add missing exports needed by other components
+export async function connectWallet(): Promise<string> {
+  if (!web3) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
+  }
+  
+  try {
+    const accounts = await web3!.eth.getAccounts();
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No accounts found. Please make sure your wallet is connected.");
+    }
+    
+    return accounts[0];
+  } catch (error) {
+    console.error("Error connecting wallet:", error);
+    throw error;
+  }
+}
+
+export async function getCurrentAccount(): Promise<string | null> {
+  if (typeof window.ethereum === 'undefined') {
+    return null;
+  }
+  
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+    return accounts.length > 0 ? accounts[0] : null;
+  } catch (error) {
+    console.error("Error getting current account:", error);
+    return null;
+  }
+}
+
+export function formatWalletAddress(address: string): string {
+  if (!address) return "";
+  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+}
+
+export async function switchToMainnet(): Promise<void> {
+  if (typeof window.ethereum === 'undefined') {
+    throw new Error("Ethereum provider not found. Please install MetaMask.");
+  }
+  
+  try {
+    // Switch to Ethereum mainnet
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x1' }], // 0x1 is Ethereum mainnet
+    });
+  } catch (error: any) {
+    // This error code indicates that the chain has not been added to MetaMask
+    if (error.code === 4902) {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [
+          {
+            chainId: '0x1',
+            chainName: 'Ethereum Mainnet',
+            nativeCurrency: {
+              name: 'Ether',
+              symbol: 'ETH',
+              decimals: 18,
+            },
+            rpcUrls: ['https://mainnet.infura.io/v3/'],
+            blockExplorerUrls: ['https://etherscan.io'],
+          },
+        ],
+      });
+    } else {
+      throw error;
+    }
+  }
+}
+
+export async function submitToRegistry(ipfsHash: string): Promise<string> {
+  try {
+    await submitItem(ipfsHash);
+    return "Transaction submitted successfully"; // Ideally this would return a transaction hash
+  } catch (error) {
+    console.error("Error submitting to registry:", error);
+    throw error;
+  }
+}
+
+export function handleWeb3Error(error: any): string {
+  console.error("Web3 error:", error);
+  
+  // Handle common MetaMask errors
+  if (error.code === 4001) {
+    return "Transaction rejected by user";
+  }
+  
+  if (error.code === -32603) {
+    if (error.message.includes("insufficient funds")) {
+      return "Insufficient funds for transaction";
+    }
+  }
+  
+  // Check if error is from MetaMask or other wallet
+  if (error.message) {
+    if (error.message.includes("User denied")) {
+      return "Transaction rejected by user";
+    }
+    
+    if (error.message.includes("nonce too low")) {
+      return "Transaction error: nonce too low. Try refreshing the page.";
+    }
+    
+    // Return the error message if it's reasonably short
+    if (error.message.length < 100) {
+      return error.message;
+    }
+  }
+  
+  return "An error occurred while processing your transaction";
 }
