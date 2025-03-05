@@ -4,21 +4,29 @@ import { Header } from "@/components/Header";
 import { FrontendForm } from "@/components/FrontendForm";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { Palmtree, Waves, ChevronLeft, Loader2 } from "lucide-react";
+import { Palmtree, Waves, ChevronLeft, Loader2, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getSubmissionDepositAmount } from "@/lib/web3";
 
 const Submit = () => {
   const navigate = useNavigate();
   const [depositAmount, setDepositAmount] = useState<string>("0.435");
+  const [depositBreakdown, setDepositBreakdown] = useState({
+    submissionBaseDeposit: "0.35",
+    arbitrationCost: "0.05",
+    buffer: "0.035",
+    total: "0.435"
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showBreakdown, setShowBreakdown] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchDepositAmount = async () => {
       try {
         setIsLoading(true);
-        const { depositAmount } = await getSubmissionDepositAmount();
+        const { depositAmount, breakdown } = await getSubmissionDepositAmount();
         setDepositAmount(depositAmount);
+        setDepositBreakdown(breakdown);
       } catch (error) {
         console.error("Error fetching deposit amount:", error);
       } finally {
@@ -70,9 +78,40 @@ const Submit = () => {
                 Loading deposit amount...
               </span>
             ) : (
-              <span className="font-medium text-hawaii-blue block mt-1">
-                A deposit of <span className="font-semibold">{depositAmount} ETH</span> is required for submission.
-              </span>
+              <div className="mt-3">
+                <div className="font-medium text-hawaii-blue flex items-center justify-center gap-1">
+                  A deposit of <span className="font-semibold">{depositAmount} ETH</span> is required for submission.
+                  <button 
+                    type="button"
+                    onClick={() => setShowBreakdown(!showBreakdown)}
+                    className="ml-1 text-xs flex items-center text-muted-foreground hover:text-hawaii-blue transition-colors focus:outline-none"
+                  >
+                    <Info className="h-3 w-3 ml-1" />
+                  </button>
+                </div>
+                
+                {showBreakdown && (
+                  <div className="bg-white/50 backdrop-blur-sm p-3 rounded-lg border border-hawaii-blue/10 mt-2 text-xs max-w-sm mx-auto space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Base deposit:</span>
+                      <span>{depositBreakdown.submissionBaseDeposit} ETH</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Arbitration cost:</span>
+                      <span>{depositBreakdown.arbitrationCost} ETH</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Buffer (10%):</span>
+                      <span>{depositBreakdown.buffer} ETH</span>
+                    </div>
+                    <div className="h-px bg-hawaii-blue/10 my-1"></div>
+                    <div className="flex items-center justify-between font-medium">
+                      <span>Total deposit:</span>
+                      <span className="text-hawaii-blue">{depositBreakdown.total} ETH</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </p>
         </Container>

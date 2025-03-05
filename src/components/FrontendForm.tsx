@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -13,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
@@ -38,14 +39,22 @@ export function FrontendForm() {
   });
   
   const [depositAmount, setDepositAmount] = useState<string>("0.435");
+  const [depositBreakdown, setDepositBreakdown] = useState({
+    submissionBaseDeposit: "0.35",
+    arbitrationCost: "0.05",
+    buffer: "0.035",
+    total: "0.435"
+  });
   const [isLoadingDeposit, setIsLoadingDeposit] = useState<boolean>(true);
+  const [showBreakdown, setShowBreakdown] = useState<boolean>(false);
   
   useEffect(() => {
     const fetchDepositAmount = async () => {
       try {
         setIsLoadingDeposit(true);
-        const { depositAmount } = await getSubmissionDepositAmount();
+        const { depositAmount, breakdown } = await getSubmissionDepositAmount();
         setDepositAmount(depositAmount);
+        setDepositBreakdown(breakdown);
       } catch (error) {
         console.error("Error fetching deposit amount:", error);
         // Keep the default value
@@ -192,16 +201,52 @@ export function FrontendForm() {
         <CardTitle className="text-2xl">Submit a New Frontend</CardTitle>
         <CardDescription>
           Add a decentralized frontend to the registry. All information will be permanently stored on IPFS and verified by the community.
-          <span className="block mt-1 font-medium text-hawaii-teal">
+          <div className="mt-3 flex flex-col">
             {isLoadingDeposit ? (
               <span className="flex items-center">
                 <Loader2 className="h-3 w-3 mr-2 animate-spin" />
                 Loading required deposit amount...
               </span>
             ) : (
-              <>A deposit of <span className="font-semibold text-hawaii-blue">{depositAmount} ETH</span> is required for this submission.</>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Required deposit:</span>
+                  <span className="font-semibold text-hawaii-blue">{depositAmount} ETH</span>
+                </div>
+                
+                <button 
+                  type="button"
+                  onClick={() => setShowBreakdown(!showBreakdown)}
+                  className="text-xs flex items-center text-muted-foreground hover:text-hawaii-blue transition-colors focus:outline-none"
+                >
+                  <Info className="h-3 w-3 mr-1" />
+                  {showBreakdown ? "Hide" : "Show"} deposit breakdown
+                </button>
+                
+                {showBreakdown && (
+                  <div className="bg-hawaii-blue/5 p-3 rounded-lg border border-hawaii-blue/10 text-xs space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Base deposit:</span>
+                      <span>{depositBreakdown.submissionBaseDeposit} ETH</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Arbitration cost:</span>
+                      <span>{depositBreakdown.arbitrationCost} ETH</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Buffer (10%):</span>
+                      <span>{depositBreakdown.buffer} ETH</span>
+                    </div>
+                    <div className="h-px bg-hawaii-blue/10 my-1"></div>
+                    <div className="flex items-center justify-between font-medium">
+                      <span>Total deposit:</span>
+                      <span className="text-hawaii-blue">{depositBreakdown.total} ETH</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
-          </span>
+          </div>
         </CardDescription>
       </CardHeader>
       

@@ -1,4 +1,3 @@
-
 import { Web3Error } from "@/types";
 import { toast } from "sonner";
 import LCURATE_ABI from "@/constants/lcurate_ABI.json";
@@ -37,7 +36,16 @@ export async function getCurrentAccount(): Promise<string | null> {
   }
 }
 
-export async function getSubmissionDepositAmount(): Promise<{ depositAmount: string, depositInWei: string }> {
+export async function getSubmissionDepositAmount(): Promise<{ 
+  depositAmount: string, 
+  depositInWei: string,
+  breakdown: {
+    submissionBaseDeposit: string,
+    arbitrationCost: string,
+    buffer: string,
+    total: string
+  }
+}> {
   try {
     // Create Web3 instance
     const Web3 = (await import("web3")).default;
@@ -47,21 +55,18 @@ export async function getSubmissionDepositAmount(): Promise<{ depositAmount: str
     const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
     
     // Step 1: Get submissionBaseDeposit
-    const submissionBaseDeposit = await contract.methods.submissionBaseDeposit().call();
+    const submissionBaseDepositResult = await contract.methods.submissionBaseDeposit().call();
+    const submissionBaseDeposit = submissionBaseDepositResult ? submissionBaseDepositResult.toString() : "0";
     
-    // Step 1: Get arbitrator address and extraData
-    const arbitratorAddress = await contract.methods.arbitrator().call();
-    const arbitratorExtraData = await contract.methods.arbitratorExtraData().call();
-    
-    // Step 2: Create arbitrator contract instance and get arbitration cost
-    // We need the Kleros arbitrator ABI, but for now we can just use the cost estimation
     // Hard-coding a typical arbitration cost for Kleros Court
     const estimatedArbitrationCost = web3.utils.toWei("0.05", "ether");
     
     // Step 3: Calculate total deposit (submission deposit + arbitration cost)
-    const totalDepositWei = BigInt(submissionBaseDeposit.toString()) + BigInt(estimatedArbitrationCost);
+    const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(estimatedArbitrationCost);
     
     // Convert to ETH for display
+    const submissionBaseDepositEth = web3.utils.fromWei(submissionBaseDeposit, "ether");
+    const arbitrationCostEth = web3.utils.fromWei(estimatedArbitrationCost, "ether");
     const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
     
     // Add a small buffer (10%) to account for gas price fluctuations
@@ -69,15 +74,27 @@ export async function getSubmissionDepositAmount(): Promise<{ depositAmount: str
     const totalWithBuffer = (Number(depositAmountEth) + Number(bufferAmount)).toFixed(5);
     
     return { 
-      depositAmount: totalWithBuffer, 
-      depositInWei: totalDepositWei.toString() 
+      depositAmount: totalWithBuffer,
+      depositInWei: totalDepositWei.toString(),
+      breakdown: {
+        submissionBaseDeposit: submissionBaseDepositEth,
+        arbitrationCost: arbitrationCostEth,
+        buffer: bufferAmount,
+        total: totalWithBuffer
+      }
     };
   } catch (error) {
     console.error("Error getting submission deposit amount:", error);
     // Return default value as fallback
     return { 
       depositAmount: "0.435", 
-      depositInWei: "435000000000000000" 
+      depositInWei: "435000000000000000",
+      breakdown: {
+        submissionBaseDeposit: "0.35",
+        arbitrationCost: "0.05",
+        buffer: "0.035",
+        total: "0.435"
+      }
     };
   }
 }
