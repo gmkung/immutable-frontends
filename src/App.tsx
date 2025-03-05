@@ -10,13 +10,6 @@ import Index from "./pages/Index";
 import Submit from "./pages/Submit";
 import NotFound from "./pages/NotFound";
 
-// TypeScript declaration for ethereum in window
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
-
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {

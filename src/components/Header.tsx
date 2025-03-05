@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
@@ -7,13 +6,6 @@ import { getCurrentAccount, formatWalletAddress, connectWallet } from "@/lib/web
 import { Database, PlusCircle, Wallet, Waves, Palmtree, Info } from "lucide-react";
 import { toast } from "sonner";
 import { AboutModal } from "@/components/AboutModal";
-
-// TypeScript declaration for ethereum in window
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
 
 export function Header() {
   const [account, setAccount] = useState<string | null>(null);
