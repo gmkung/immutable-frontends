@@ -1,4 +1,3 @@
-
 import { getWeb3Instances } from "./core";
 import { arbitratorABI, CHALLENGE_PERIOD_DAYS, ZERO_ADDRESS, DepositDetails } from "./types";
 
@@ -13,7 +12,7 @@ export async function getSubmissionDepositAmount(): Promise<DepositDetails> {
     const baseDeposit = await registry.methods.submissionBaseDeposit().call();
     
     // Get arbitration cost
-    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitrator: string = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Check if arbitrator address is valid
@@ -68,7 +67,7 @@ export async function getSubmissionChallengeDepositAmount(): Promise<string> {
     const baseDeposit = await registry.methods.submissionChallengeBaseDeposit().call();
     
     // Get arbitration cost
-    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitrator: string = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Check if arbitrator address is valid
@@ -114,7 +113,7 @@ export async function getRemovalDepositAmount(): Promise<string> {
     const baseDeposit = await registry.methods.removalBaseDeposit().call();
     
     // Get arbitration cost
-    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitrator: string = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Check if arbitrator address is valid
@@ -160,7 +159,7 @@ export async function getRemovalChallengeDepositAmount(): Promise<string> {
     const baseDeposit = await registry.methods.removalChallengeBaseDeposit().call();
     
     // Get arbitration cost
-    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitrator: string = await registry.methods.arbitrator().call();
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Check if arbitrator address is valid
