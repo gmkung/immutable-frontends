@@ -1,4 +1,3 @@
-
 import { CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
@@ -27,12 +26,15 @@ export function FrontendCardFooter({
 }: FrontendCardFooterProps) {
   return (
     <CardFooter className="flex flex-col space-y-4 pt-4 pb-4 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10 px-6">
-      {/* First row: Submission time and Action buttons */}
-      <div className="w-full flex justify-between items-center">
+      {/* First row: Submission time */}
+      <div className="w-full">
         {submissionTime && (
           <span>Listed {formatDate(submissionTime)}</span>
         )}
-        
+      </div>
+      
+      {/* Second row: Action buttons */}
+      <div className="w-full flex justify-end items-center">
         <ActionButtons 
           status={status}
           ipfsGatewayUrl={ipfsGatewayUrl}

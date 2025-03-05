@@ -19,7 +19,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<"remove" | "challenge">("remove");
-  
+
   const props = item.metadata.props;
   const name = getPropValue(props, "Name");
   const description = getPropValue(props, "Description");
@@ -29,7 +29,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
   const commitHash = getPropValue(props, "Commit hash");
   const versionTag = getPropValue(props, "Version tag (optional)");
   const additionalInfo = getPropValue(props, "Additional information (Optional)");
-  
+
   const ipfsGatewayUrl = getIPFSGatewayURL(locatorId);
   const submissionTime = item.requests[0]?.submissionTime || "";
 
@@ -37,7 +37,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
     try {
       const account = await connectWallet();
       const isMainnet = await switchToMainnet();
-      
+
       if (!isMainnet) {
         toast.error("Please switch to Ethereum Mainnet to continue");
         return;
@@ -51,7 +51,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         toast.error("No action available for this status");
         return;
       }
-      
+
       setIsEvidenceModalOpen(true);
     } catch (error: any) {
       console.error("Action error:", error);
@@ -62,9 +62,9 @@ export function FrontendCard({ item }: FrontendCardProps) {
   const handleEvidenceSubmit = async (ipfsURI: string) => {
     try {
       setIsLoading(true);
-      
+
       const { removeItem, challengeRequest } = await import("@/lib/web3");
-      
+
       if (currentAction === "remove") {
         await removeItem(item.itemID, ipfsURI);
         toast.success("Removal request submitted successfully");
@@ -72,7 +72,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         await challengeRequest(item.itemID, ipfsURI);
         toast.success("Challenge submitted successfully");
       }
-      
+
       setIsEvidenceModalOpen(false);
     } catch (error: any) {
       console.error("Action error:", error);
@@ -85,17 +85,17 @@ export function FrontendCard({ item }: FrontendCardProps) {
   const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
-  
+
   return (
     <Card className="glass-card overflow-hidden animate-slide-up w-full">
-      <FrontendCardHeader 
+      <FrontendCardHeader
         name={name}
         description={description}
         networkName={networkName}
         status={item.status}
       />
-      
-      <FrontendCardContent 
+
+      <FrontendCardContent
         locatorId={locatorId}
         repoUrl={repoUrl}
         commitHash={commitHash}
@@ -103,8 +103,8 @@ export function FrontendCard({ item }: FrontendCardProps) {
         additionalInfo={additionalInfo}
         isExpanded={isExpanded}
       />
-      
-      <FrontendCardFooter 
+
+      <FrontendCardFooter
         submissionTime={submissionTime}
         ipfsGatewayUrl={ipfsGatewayUrl}
         status={item.status}
