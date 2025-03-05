@@ -530,21 +530,19 @@ export async function challengeRequest(itemID: string): Promise<string> {
       throw new Error("No request found for this item");
     }
     
-    // Get item status to determine which deposit amount to use - convert to proper type
+    // Get item status to determine which deposit amount to use
     const itemResult = await contract.methods.items(itemID).call();
     
     if (!itemResult) {
       throw new Error("Failed to retrieve item information");
     }
     
-    // Ensure we have a valid status by converting to number
     const itemStatus = Number(itemResult.status);
     
     if (isNaN(itemStatus)) {
       throw new Error("Failed to retrieve valid item status");
     }
     
-    // 1 = RegistrationRequested, 3 = ClearingRequested
     let depositInfo;
     if (itemStatus === 1) {
       depositInfo = await getSubmissionChallengeDepositAmount();
@@ -554,7 +552,6 @@ export async function challengeRequest(itemID: string): Promise<string> {
       throw new Error("Item not in a challengeable state");
     }
     
-    // Get the most recent request ID (use Number to ensure it's a number)
     const requestID = requestCount - 1;
     
     // Estimate gas and get current gas price
