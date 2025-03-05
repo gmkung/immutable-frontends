@@ -8,7 +8,7 @@ import { Database, PlusCircle, Wallet, Waves, Palmtree, Info } from "lucide-reac
 import { toast } from "sonner";
 import { AboutModal } from "@/components/AboutModal";
 
-// TypeScript declaration for ethereum in window if needed
+// TypeScript declaration for ethereum in window
 declare global {
   interface Window {
     ethereum?: any;

@@ -57,9 +57,15 @@ export async function getSubmissionDepositAmount() {
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Create arbitrator contract instance
+    const arbitratorABI = [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}];
+    
+    // Make sure arbitrator is a valid address
+    if (!arbitrator || arbitrator === '0x0000000000000000000000000000000000000000') {
+      throw new Error("Invalid arbitrator address");
+    }
+    
     const arbitratorContract = new web3!.eth.Contract(
-      // Simplified Arbitrator ABI with just the arbitrationCost function
-      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitratorABI,
       arbitrator
     );
     
@@ -76,8 +82,8 @@ export async function getSubmissionDepositAmount() {
     return {
       depositAmount: formattedDeposit,
       breakdown: {
-        submissionBaseDeposit: web3!.utils.fromWei(baseDeposit, 'ether'),
-        arbitrationCost: web3!.utils.fromWei(arbitrationCost, 'ether'),
+        submissionBaseDeposit: web3!.utils.fromWei(baseDeposit.toString(), 'ether'),
+        arbitrationCost: web3!.utils.fromWei(arbitrationCost.toString(), 'ether'),
         total: formattedDeposit
       },
       challengePeriodDays: CHALLENGE_PERIOD_DAYS
@@ -105,8 +111,14 @@ export async function getSubmissionChallengeDepositAmount() {
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Create arbitrator contract instance
+    const arbitratorABI = [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}];
+    
+    if (!arbitrator || arbitrator === '0x0000000000000000000000000000000000000000') {
+      throw new Error("Invalid arbitrator address");
+    }
+    
     const arbitratorContract = new web3!.eth.Contract(
-      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitratorABI,
       arbitrator
     );
     
@@ -143,8 +155,14 @@ export async function getRemovalDepositAmount() {
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Create arbitrator contract instance
+    const arbitratorABI = [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}];
+    
+    if (!arbitrator || arbitrator === '0x0000000000000000000000000000000000000000') {
+      throw new Error("Invalid arbitrator address");
+    }
+    
     const arbitratorContract = new web3!.eth.Contract(
-      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitratorABI,
       arbitrator
     );
     
@@ -181,8 +199,14 @@ export async function getRemovalChallengeDepositAmount() {
     const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
     // Create arbitrator contract instance
+    const arbitratorABI = [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}];
+    
+    if (!arbitrator || arbitrator === '0x0000000000000000000000000000000000000000') {
+      throw new Error("Invalid arbitrator address");
+    }
+    
     const arbitratorContract = new web3!.eth.Contract(
-      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitratorABI,
       arbitrator
     );
     
@@ -235,7 +259,7 @@ export async function removeItem(itemID: string, evidenceURI: string): Promise<v
     await registry.methods.removeItem(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
-      gas: 500000 // Gas estimate
+      gas: "500000" // Gas estimate as string
     });
     
   } catch (error) {
@@ -261,13 +285,20 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
 
     // Get item info to determine which deposit to use
     const itemInfo = await registry.methods.getItemInfo(itemID).call();
+    if (!itemInfo) {
+      throw new Error("Could not retrieve item information");
+    }
+    
     const requestID = Number(itemInfo.numberOfRequests) - 1;
     
     // Get request info
     const requestInfo = await registry.methods.getRequestInfo(itemID, requestID).call();
+    if (!requestInfo) {
+      throw new Error("Could not retrieve request information");
+    }
     
     // Determine which deposit to use based on the current request status
-    let depositAmount;
+    let depositAmount: string;
     if (requestInfo.parties[1] === "0x0000000000000000000000000000000000000000") {
       // This is a registration request (submitter is in position 0)
       depositAmount = await getSubmissionChallengeDepositAmount();
@@ -292,7 +323,7 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
     await registry.methods.challengeRequest(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
-      gas: 500000 // Gas estimate
+      gas: "500000" // Gas estimate as string
     });
     
   } catch (error) {
@@ -328,7 +359,7 @@ export async function submitItem(itemString: string): Promise<void> {
     await registry.methods.addItem(itemString).send({
       from: accounts[0],
       value: depositWei,
-      gas: 500000 // Gas estimate
+      gas: "500000" // Gas estimate as string
     });
   } catch (error) {
     console.error("Error submitting item:", error);
@@ -430,7 +461,7 @@ export function handleWeb3Error(error: any): string {
   }
   
   if (error.code === -32603) {
-    if (error.message.includes("insufficient funds")) {
+    if (error.message && error.message.includes("insufficient funds")) {
       return "Insufficient funds for transaction";
     }
   }
