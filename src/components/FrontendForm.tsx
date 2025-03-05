@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -44,6 +45,7 @@ export function FrontendForm() {
     arbitrationCost: "0.05",
     total: "0.40"
   });
+  const [challengePeriodDays, setChallengePeriodDays] = useState<number>(7);
   const [isLoadingDeposit, setIsLoadingDeposit] = useState<boolean>(true);
   const [showBreakdown, setShowBreakdown] = useState<boolean>(false);
   
@@ -51,11 +53,13 @@ export function FrontendForm() {
     const fetchDepositAmount = async () => {
       try {
         setIsLoadingDeposit(true);
-        const { depositAmount, breakdown } = await getSubmissionDepositAmount();
+        const { depositAmount, breakdown, challengePeriodDays } = await getSubmissionDepositAmount();
         console.log("Fetched deposit amount:", depositAmount);
         console.log("Breakdown:", breakdown);
+        console.log("Challenge period days:", challengePeriodDays);
         setDepositAmount(depositAmount);
         setDepositBreakdown(breakdown);
+        setChallengePeriodDays(challengePeriodDays);
       } catch (error) {
         console.error("Error fetching deposit amount:", error);
         // Keep the default value
@@ -200,7 +204,7 @@ export function FrontendForm() {
       </CardHeader>
       
       <CardContent>
-        <TooltipProvider>
+        <TooltipProvider delayDuration={300}>
           <div className="mb-6">
             {isLoadingDeposit ? (
               <span className="flex items-center text-sm">
@@ -210,7 +214,17 @@ export function FrontendForm() {
             ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Required deposit:</span>
+                  <span className="text-sm font-medium flex items-center">
+                    Required deposit:
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs z-50">
+                        <p>This deposit amount will be refunded after the challenge period ({challengePeriodDays} days) if your submission is not challenged or if you win any challenges.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </span>
                   <span className="font-semibold text-hawaii-blue">{depositAmount} ETH</span>
                 </div>
                 
@@ -232,7 +246,7 @@ export function FrontendForm() {
                           <TooltipTrigger asChild>
                             <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                          <TooltipContent className="max-w-xs z-50">
                             <p>The base deposit required by the Kleros Curate registry for new submissions. This is part of the incentive mechanism for honest submissions.</p>
                           </TooltipContent>
                         </Tooltip>
@@ -246,7 +260,7 @@ export function FrontendForm() {
                           <TooltipTrigger asChild>
                             <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                          <TooltipContent className="max-w-xs z-50">
                             <p>Fee required to cover potential dispute resolution by Kleros jurors if your submission is challenged. This ensures disputes can be resolved if needed.</p>
                           </TooltipContent>
                         </Tooltip>
@@ -261,8 +275,8 @@ export function FrontendForm() {
                           <TooltipTrigger asChild>
                             <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            <p>The total amount you need to deposit to submit your frontend. This deposit is refundable if your submission is not challenged or if you win any challenges.</p>
+                          <TooltipContent className="max-w-xs z-50">
+                            <p>The total amount you need to deposit to submit your frontend. This deposit is refundable after the challenge period ({challengePeriodDays} days) if your submission is not challenged or if you win any challenges.</p>
                           </TooltipContent>
                         </Tooltip>
                       </span>

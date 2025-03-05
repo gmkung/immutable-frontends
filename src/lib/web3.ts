@@ -37,6 +37,29 @@ export async function getCurrentAccount(): Promise<string | null> {
   }
 }
 
+export async function getChallengePeriodDurationInDays(): Promise<number> {
+  try {
+    // Create Web3 instance
+    const Web3 = (await import("web3")).default;
+    const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
+    
+    // Create TCR contract instance
+    const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    
+    // Get challengePeriodDuration in seconds
+    const challengePeriodInSeconds = await tcrContract.methods.challengePeriodDuration().call();
+    
+    // Convert seconds to days (86400 seconds in a day)
+    const challengePeriodInDays = Math.ceil(Number(challengePeriodInSeconds) / 86400);
+    
+    return challengePeriodInDays;
+  } catch (error) {
+    console.error("Error getting challenge period duration:", error);
+    // Return default value (7 days) as fallback
+    return 7;
+  }
+}
+
 export async function getSubmissionDepositAmount(): Promise<{ 
   depositAmount: string, 
   depositInWei: string,
@@ -44,12 +67,16 @@ export async function getSubmissionDepositAmount(): Promise<{
     submissionBaseDeposit: string,
     arbitrationCost: string,
     total: string
-  }
+  },
+  challengePeriodDays: number
 }> {
   try {
     // Create Web3 instance
     const Web3 = (await import("web3")).default;
     const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
+    
+    // Get challenge period duration
+    const challengePeriodDays = await getChallengePeriodDurationInDays();
     
     // Create TCR contract instance
     const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
@@ -108,11 +135,12 @@ export async function getSubmissionDepositAmount(): Promise<{
         submissionBaseDeposit: submissionBaseDepositEth,
         arbitrationCost: arbitrationCostEth,
         total: depositAmountEth
-      }
+      },
+      challengePeriodDays
     };
   } catch (error) {
     console.error("Error getting submission deposit amount:", error);
-    // Return default value as fallback
+    // Return default value as fallback with 7-day challenge period
     return { 
       depositAmount: "0.435", 
       depositInWei: "435000000000000000",
@@ -120,7 +148,8 @@ export async function getSubmissionDepositAmount(): Promise<{
         submissionBaseDeposit: "0.35",
         arbitrationCost: "0.05",
         total: "0.40"
-      }
+      },
+      challengePeriodDays: 7
     };
   }
 }
