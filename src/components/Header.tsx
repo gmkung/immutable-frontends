@@ -1,18 +1,18 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getCurrentAccount, formatWalletAddress, connectWallet } from "@/lib/web3";
-import { Database, PlusCircle, Wallet, Waves, Palmtree } from "lucide-react";
+import { Database, PlusCircle, Wallet, Waves, Palmtree, Info } from "lucide-react";
 import { toast } from "sonner";
+import { AboutModal } from "@/components/AboutModal";
 
 export function Header() {
   const [account, setAccount] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const location = useLocation();
   
-  // Check if user is already connected
   useEffect(() => {
     const checkConnection = async () => {
       const currentAccount = await getCurrentAccount();
@@ -21,7 +21,6 @@ export function Header() {
     
     checkConnection();
     
-    // Listen for account changes
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts: string[]) => {
         setAccount(accounts[0] || null);
@@ -35,7 +34,6 @@ export function Header() {
     };
   }, []);
   
-  // Add scroll effect to header
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -73,6 +71,16 @@ export function Header() {
         </div>
         
         <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1"
+            onClick={() => setAboutModalOpen(true)}
+          >
+            <Info className="h-4 w-4 mr-1" />
+            About
+          </Button>
+          
           {location.pathname !== "/submit" && (
             <Button asChild variant="outline" size="sm" className="gap-1 neon-border">
               <Link to="/submit">
@@ -96,6 +104,11 @@ export function Header() {
           </Button>
         </div>
       </Container>
+      
+      <AboutModal 
+        open={aboutModalOpen}
+        onOpenChange={setAboutModalOpen}
+      />
     </header>
   );
 

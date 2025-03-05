@@ -16,7 +16,7 @@ const Index = () => {
           <h1 className="text-4xl font-bold mb-4">Immutable Frontends</h1>
           <p className="max-w-2xl mx-auto text-muted-foreground">
             A curated collection of verified frontends that can be accessed directly from their IPFS hashes,
-            ensuring censorship resistance and authenticity.
+            ensuring censorship resistance and authenticity via the Kleros Curate registry.
           </p>
         </Container>
         
