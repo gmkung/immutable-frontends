@@ -1,4 +1,3 @@
-
 import { Web3Error } from "@/types";
 import { toast } from "sonner";
 import LCURATE_ABI from "@/constants/lcurate_ABI.json";
@@ -44,7 +43,6 @@ export async function getSubmissionDepositAmount(): Promise<{
   breakdown: {
     submissionBaseDeposit: string,
     arbitrationCost: string,
-    buffer: string,
     total: string
   }
 }> {
@@ -88,7 +86,7 @@ export async function getSubmissionDepositAmount(): Promise<{
       arbitrationCost = web3.utils.toWei("0.05", "ether");
     }
     
-    // Step 5: Calculate total deposit (submission deposit + arbitration cost)
+    // Step 5: Calculate total deposit (submission deposit + arbitration cost) - without buffer
     const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(arbitrationCost);
     
     // Convert to ETH for display
@@ -96,26 +94,20 @@ export async function getSubmissionDepositAmount(): Promise<{
     const arbitrationCostEth = web3.utils.fromWei(arbitrationCost.toString(), "ether");
     const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
     
-    // Add a small buffer (10%) to account for gas price fluctuations
-    const bufferAmount = (Number(depositAmountEth) * 0.1).toFixed(5);
-    const totalWithBuffer = (Number(depositAmountEth) + Number(bufferAmount)).toFixed(5);
-    
     console.log("Deposit calculation breakdown:", {
       submissionBaseDeposit: submissionBaseDepositEth,
       arbitrationCost: arbitrationCostEth,
       base_plus_arbitration: depositAmountEth,
-      buffer: bufferAmount,
-      totalWithBuffer
+      total: depositAmountEth
     });
     
     return { 
-      depositAmount: totalWithBuffer,
+      depositAmount: depositAmountEth,
       depositInWei: totalDepositWei.toString(),
       breakdown: {
         submissionBaseDeposit: submissionBaseDepositEth,
         arbitrationCost: arbitrationCostEth,
-        buffer: bufferAmount,
-        total: totalWithBuffer
+        total: depositAmountEth
       }
     };
   } catch (error) {
@@ -127,8 +119,7 @@ export async function getSubmissionDepositAmount(): Promise<{
       breakdown: {
         submissionBaseDeposit: "0.35",
         arbitrationCost: "0.05",
-        buffer: "0.035",
-        total: "0.435"
+        total: "0.40"
       }
     };
   }

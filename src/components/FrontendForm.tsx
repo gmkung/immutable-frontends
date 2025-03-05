@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,8 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Info, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -42,8 +42,7 @@ export function FrontendForm() {
   const [depositBreakdown, setDepositBreakdown] = useState({
     submissionBaseDeposit: "0.35",
     arbitrationCost: "0.05",
-    buffer: "0.035",
-    total: "0.435"
+    total: "0.40"
   });
   const [isLoadingDeposit, setIsLoadingDeposit] = useState<boolean>(true);
   const [showBreakdown, setShowBreakdown] = useState<boolean>(false);
@@ -84,7 +83,6 @@ export function FrontendForm() {
   
   const onSubmit = async (values: FormValues) => {
     try {
-      // Reset status
       setStatus({
         loading: true,
         success: false,
@@ -92,7 +90,6 @@ export function FrontendForm() {
         txHash: null,
       });
       
-      // Format data for IPFS
       const itemData: ItemData = {
         columns: [
           {
@@ -154,7 +151,6 @@ export function FrontendForm() {
         },
       };
       
-      // Upload to IPFS
       toast.info("Uploading to IPFS...");
       const ipfsHash = await uploadJSONToIPFS(itemData);
       
@@ -162,14 +158,11 @@ export function FrontendForm() {
         throw new Error("Failed to upload to IPFS");
       }
       
-      // Ensure user is on mainnet
       await switchToMainnet();
       
-      // Connect wallet
       toast.info("Please approve wallet connection request");
       await connectWallet();
       
-      // Submit to registry
       toast.info(`Please approve transaction in your wallet (requires ${depositAmount} ETH deposit)`);
       const txHash = await submitToRegistry(ipfsHash);
       
@@ -203,9 +196,14 @@ export function FrontendForm() {
         <CardTitle className="text-2xl">Submit a New Frontend</CardTitle>
         <CardDescription>
           Add a decentralized frontend to the registry. All information will be permanently stored on IPFS and verified by the community.
-          <div className="mt-3 flex flex-col">
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        <TooltipProvider>
+          <div className="mb-6">
             {isLoadingDeposit ? (
-              <span className="flex items-center">
+              <span className="flex items-center text-sm">
                 <Loader2 className="h-3 w-3 mr-2 animate-spin" />
                 Loading required deposit amount...
               </span>
@@ -228,20 +226,46 @@ export function FrontendForm() {
                 {showBreakdown && (
                   <div className="bg-hawaii-blue/5 p-3 rounded-lg border border-hawaii-blue/10 text-xs space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Base deposit:</span>
+                      <span className="flex items-center text-muted-foreground">
+                        Base deposit:
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>The base deposit required by the Kleros Curate registry for new submissions. This is part of the incentive mechanism for honest submissions.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </span>
                       <span>{depositBreakdown.submissionBaseDeposit} ETH</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Arbitration cost:</span>
+                      <span className="flex items-center text-muted-foreground">
+                        Arbitration cost:
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>Fee required to cover potential dispute resolution by Kleros jurors if your submission is challenged. This ensures disputes can be resolved if needed.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </span>
                       <span>{depositBreakdown.arbitrationCost} ETH</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Buffer (10%):</span>
-                      <span>{depositBreakdown.buffer} ETH</span>
                     </div>
                     <div className="h-px bg-hawaii-blue/10 my-1"></div>
                     <div className="flex items-center justify-between font-medium">
-                      <span>Total deposit:</span>
+                      <span className="flex items-center">
+                        Total deposit:
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>The total amount you need to deposit to submit your frontend. This deposit is refundable if your submission is not challenged or if you win any challenges.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </span>
                       <span className="text-hawaii-blue">{depositBreakdown.total} ETH</span>
                     </div>
                   </div>
@@ -249,59 +273,20 @@ export function FrontendForm() {
               </div>
             )}
           </div>
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Uniswap" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Name of the protocol this frontend is for
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Describe what this frontend does and its purpose"
-                      rows={3}
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="networkName"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Network Name</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input placeholder="e.g., Uniswap" {...field} />
                     </FormControl>
                     <FormDescription>
-                      e.g., IPFS, Arweave
+                      Name of the protocol this frontend is for
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -310,120 +295,157 @@ export function FrontendForm() {
               
               <FormField
                 control={form.control}
-                name="locatorId"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Locator ID</FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Input placeholder="IPFS hash or other identifier" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="repositoryUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Repository URL</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://github.com/..." {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    URL to the GitHub or other repository
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="commitHash"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Commit Hash</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., a83fae0" {...field} />
+                      <Textarea 
+                        placeholder="Describe what this frontend does and its purpose"
+                        rows={3}
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="networkName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Network Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        e.g., IPFS, Arweave
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="locatorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Locator ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="IPFS hash or other identifier" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <FormField
                 control={form.control}
-                name="versionTag"
+                name="repositoryUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Version Tag (Optional)</FormLabel>
+                    <FormLabel>Repository URL</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., v1.2.3" {...field} />
+                      <Input placeholder="https://github.com/..." {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      URL to the GitHub or other repository
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="commitHash"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Commit Hash</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., a83fae0" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="versionTag"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Version Tag (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g., v1.2.3" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="additionalInfo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Information (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Any additional details relevant for verification"
+                        rows={4}
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-            
-            <FormField
-              control={form.control}
-              name="additionalInfo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional Information (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Any additional details relevant for verification"
-                      rows={4}
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              
+              {status.error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    {status.error}
+                  </AlertDescription>
+                </Alert>
               )}
-            />
-            
-            {status.error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {status.error}
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {status.success && (
-              <Alert className="bg-green-50 text-green-800 border-green-200">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription>
-                  Successfully submitted! Transaction hash: {status.txHash}
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="pt-2">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={status.loading || isLoadingDeposit}
-              >
-                {status.loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  "Submit Frontend"
-                )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              
+              {status.success && (
+                <Alert className="bg-green-50 text-green-800 border-green-200">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertDescription>
+                    Successfully submitted! Transaction hash: {status.txHash}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={status.loading || isLoadingDeposit}
+                >
+                  {status.loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Frontend"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </TooltipProvider>
       </CardContent>
     </Card>
   );
