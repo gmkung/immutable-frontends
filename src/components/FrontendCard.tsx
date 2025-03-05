@@ -1,3 +1,4 @@
+
 import { LItem, ItemProp } from "@/types";
 import { copyToClipboard, formatDate, getIPFSGatewayURL, getPropValue, truncateMiddle } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -231,25 +232,14 @@ export function FrontendCard({ item }: FrontendCardProps) {
       </CardContent>
       
       <CardFooter className="flex flex-col space-y-4 pt-4 pb-4 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10 px-6">
+        {/* First row: Submission time */}
         {submissionTime && (
           <div className="w-full text-left">
             <span>Listed {formatDate(submissionTime)}</span>
           </div>
         )}
         
-        {additionalInfo !== "N/A" && (
-          <div className="w-full flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs hover:text-hawaii-teal px-0"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? "▲" : "▼"}
-            </Button>
-          </div>
-        )}
-        
+        {/* Second row: Action buttons */}
         <div className="w-full flex flex-wrap gap-2 justify-end">
           <Button
             variant="default"
@@ -282,6 +272,20 @@ export function FrontendCard({ item }: FrontendCardProps) {
             </Button>
           )}
         </div>
+        
+        {/* Show more button at the bottom */}
+        {additionalInfo !== "N/A" && (
+          <div className="w-full flex justify-center mt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs hover:text-hawaii-teal px-0"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? "▲" : "▼"}
+            </Button>
+          </div>
+        )}
       </CardFooter>
 
       <EvidenceModal
