@@ -1,7 +1,9 @@
+
 import { CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { ActionButtons } from "./ActionButtons";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface FrontendCardFooterProps {
   submissionTime: string;
@@ -43,16 +45,17 @@ export function FrontendCardFooter({
         />
       </div>
       
-      {/* Show more button at the bottom */}
+      {/* Show more button at the bottom - full width with chevron */}
       {additionalInfo !== "N/A" && (
-        <div className="w-full flex justify-center mt-2">
+        <div className="w-full mt-2">
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 text-xs hover:text-hawaii-teal px-0"
+            className="w-full h-8 text-xs hover:text-hawaii-teal flex items-center justify-center border-t border-hawaii-teal/10"
             onClick={onToggleExpand}
           >
-            {isExpanded ? "▲" : "▼"}
+            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            <span className="ml-1">{isExpanded ? "Show less" : "Show more"}</span>
           </Button>
         </div>
       )}
