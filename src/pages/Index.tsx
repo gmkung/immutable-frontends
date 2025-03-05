@@ -2,6 +2,7 @@
 import { Header } from "@/components/Header";
 import { FrontendList } from "@/components/FrontendList";
 import { Container } from "@/components/ui/container";
+import { Database, Code, Network, Cloud } from "lucide-react";
 
 const Index = () => {
   return (
@@ -18,6 +19,21 @@ const Index = () => {
             A curated collection of verified frontends that can be accessed directly from their IPFS hashes,
             ensuring censorship resistance and authenticity via the Kleros Curate registry.
           </p>
+          
+          <div className="flex flex-wrap justify-center gap-4 mt-6">
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Database className="h-4 w-4 text-primary" /> Powered by Kleros
+            </div>
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Network className="h-4 w-4 text-primary" /> Ethereum
+            </div>
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Code className="h-4 w-4 text-primary" /> The Graph
+            </div>
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Cloud className="h-4 w-4 text-primary" /> IPFS
+            </div>
+          </div>
         </Container>
         
         <FrontendList />
