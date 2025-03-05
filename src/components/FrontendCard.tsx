@@ -1,4 +1,3 @@
-
 import { LItem, ItemProp } from "@/types";
 import { copyToClipboard, formatDate, getIPFSGatewayURL, getPropValue, truncateMiddle } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +33,6 @@ export function FrontendCard({ item }: FrontendCardProps) {
   const ipfsGatewayUrl = getIPFSGatewayURL(locatorId);
   const submissionTime = item.requests[0]?.submissionTime || "";
   
-  // Map status values from LightGeneralizedTCR contract
   const getStatusInfo = (status: string) => {
     switch (status) {
       case "Registered":
@@ -52,10 +50,8 @@ export function FrontendCard({ item }: FrontendCardProps) {
   
   const statusInfo = getStatusInfo(item.status);
 
-  // Handle the initial button click based on the status
   const handleActionInitiate = async () => {
     try {
-      // First ensure wallet is connected and on mainnet
       const account = await connectWallet();
       const isMainnet = await switchToMainnet();
       
@@ -64,7 +60,6 @@ export function FrontendCard({ item }: FrontendCardProps) {
         return;
       }
 
-      // Set the current action based on status
       if (item.status === "Registered") {
         setCurrentAction("remove");
       } else if (item.status === "RegistrationRequested" || item.status === "ClearingRequested") {
@@ -74,7 +69,6 @@ export function FrontendCard({ item }: FrontendCardProps) {
         return;
       }
       
-      // Open evidence modal
       setIsEvidenceModalOpen(true);
     } catch (error: any) {
       console.error("Action error:", error);
@@ -82,26 +76,20 @@ export function FrontendCard({ item }: FrontendCardProps) {
     }
   };
 
-  // Handle the actual action after evidence is submitted
   const handleEvidenceSubmit = async (ipfsURI: string) => {
     try {
       setIsLoading(true);
       
-      // Import action functions dynamically
       const { removeItem, challengeRequest } = await import("@/lib/web3");
       
-      // Different actions based on status
       if (currentAction === "remove") {
-        // Request to remove item with evidence
         await removeItem(item.itemID, ipfsURI);
         toast.success("Removal request submitted successfully");
       } else if (currentAction === "challenge") {
-        // Challenge the current request with evidence
         await challengeRequest(item.itemID, ipfsURI);
         toast.success("Challenge submitted successfully");
       }
       
-      // Close modal
       setIsEvidenceModalOpen(false);
     } catch (error: any) {
       console.error("Action error:", error);
@@ -111,7 +99,6 @@ export function FrontendCard({ item }: FrontendCardProps) {
     }
   };
 
-  // Get button text based on status
   const getActionButtonText = () => {
     switch (item.status) {
       case "Registered":
@@ -124,7 +111,6 @@ export function FrontendCard({ item }: FrontendCardProps) {
     }
   };
 
-  // Get button icon based on status
   const getActionButtonIcon = () => {
     switch (item.status) {
       case "Registered":
@@ -244,25 +230,27 @@ export function FrontendCard({ item }: FrontendCardProps) {
         )}
       </CardContent>
       
-      <CardFooter className="flex justify-between items-center pt-2 pb-4 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10 px-6">
-        <div>
-          {submissionTime && (
+      <CardFooter className="flex flex-col space-y-4 pt-4 pb-4 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10 px-6">
+        {submissionTime && (
+          <div className="w-full text-left">
             <span>Listed {formatDate(submissionTime)}</span>
-          )}
-        </div>
+          </div>
+        )}
         
-        <div className="flex gap-2">
-          {additionalInfo !== "N/A" && (
+        {additionalInfo !== "N/A" && (
+          <div className="w-full flex justify-start">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-xs hover:text-hawaii-teal"
+              className="h-8 text-xs hover:text-hawaii-teal px-0"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               {isExpanded ? "Show less" : "Show more"}
             </Button>
-          )}
-          
+          </div>
+        )}
+        
+        <div className="w-full flex flex-wrap gap-2 justify-end">
           <Button
             variant="default"
             size="sm"
@@ -273,7 +261,6 @@ export function FrontendCard({ item }: FrontendCardProps) {
             Open Frontend
           </Button>
 
-          {/* Render action button based on status */}
           {item.status !== "Absent" && (
             <Button
               variant="outline"
@@ -297,7 +284,6 @@ export function FrontendCard({ item }: FrontendCardProps) {
         </div>
       </CardFooter>
 
-      {/* Evidence Modal */}
       <EvidenceModal
         isOpen={isEvidenceModalOpen}
         onClose={() => setIsEvidenceModalOpen(false)}
