@@ -1,3 +1,4 @@
+
 import { Web3Error } from "@/types";
 import { toast } from "sonner";
 import LCURATE_ABI from "@/constants/lcurate_ABI.json";
@@ -55,8 +56,7 @@ export async function getChallengePeriodDurationInDays(): Promise<number> {
     return challengePeriodInDays;
   } catch (error) {
     console.error("Error getting challenge period duration:", error);
-    // Return default value (7 days) as fallback
-    return 7;
+    throw new Error("Failed to retrieve challenge period duration");
   }
 }
 
@@ -104,16 +104,14 @@ export async function getSubmissionDepositAmount(): Promise<{
         console.log("Arbitration cost from contract:", arbitrationCost);
       } catch (error) {
         console.error("Error getting arbitration cost:", error);
-        // Fallback to estimated value if there's an error
-        arbitrationCost = web3.utils.toWei("0.05", "ether");
-        console.log("Using fallback arbitration cost:", arbitrationCost);
+        throw new Error("Failed to retrieve arbitration cost");
       }
     } else {
-      console.warn("Invalid arbitrator address, using fallback value");
-      arbitrationCost = web3.utils.toWei("0.05", "ether");
+      console.warn("Invalid arbitrator address");
+      throw new Error("Invalid arbitrator address");
     }
     
-    // Step 5: Calculate total deposit (submission deposit + arbitration cost) - without buffer
+    // Step 5: Calculate total deposit (submission deposit + arbitration cost)
     const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(arbitrationCost);
     
     // Convert to ETH for display
@@ -140,17 +138,7 @@ export async function getSubmissionDepositAmount(): Promise<{
     };
   } catch (error) {
     console.error("Error getting submission deposit amount:", error);
-    // Return default value as fallback with 7-day challenge period
-    return { 
-      depositAmount: "0.435", 
-      depositInWei: "435000000000000000",
-      breakdown: {
-        submissionBaseDeposit: "0.35",
-        arbitrationCost: "0.05",
-        total: "0.40"
-      },
-      challengePeriodDays: 7
-    };
+    throw new Error(`Failed to calculate required deposit amount: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
