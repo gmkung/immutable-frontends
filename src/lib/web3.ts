@@ -545,7 +545,7 @@ export async function challengeRequest(itemID: string, evidence: string = ""): P
     }
     
     // Get item info (need to cast to known shape)
-    const itemResult = await contract.methods.items(itemID).call();
+    const itemResult = await contract.methods.items(itemID).call() as Item;
     
     if (!itemResult) {
       throw new Error("Failed to retrieve item information");
