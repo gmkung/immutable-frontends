@@ -1,6 +1,8 @@
+
 import { Web3Error } from "@/types";
 import { toast } from "sonner";
 import LCURATE_ABI from "@/constants/lcurate_ABI.json";
+import KLEROS_LIQUID_ABI from "@/constants/KlerosLiquid_ABI.json";
 
 declare global {
   interface Window {
@@ -51,27 +53,54 @@ export async function getSubmissionDepositAmount(): Promise<{
     const Web3 = (await import("web3")).default;
     const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
     
-    // Create contract instance
-    const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    // Create TCR contract instance
+    const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
     
     // Step 1: Get submissionBaseDeposit
-    const submissionBaseDepositResult = await contract.methods.submissionBaseDeposit().call();
+    const submissionBaseDepositResult = await tcrContract.methods.submissionBaseDeposit().call();
     const submissionBaseDeposit = submissionBaseDepositResult ? submissionBaseDepositResult.toString() : "0";
     
-    // Hard-coding a typical arbitration cost for Kleros Court
-    const estimatedArbitrationCost = web3.utils.toWei("0.05", "ether");
+    // Step 2: Get arbitrator address and extra data
+    const arbitratorAddress = await tcrContract.methods.arbitrator().call();
+    const arbitratorExtraData = await tcrContract.methods.arbitratorExtraData().call();
     
-    // Step 3: Calculate total deposit (submission deposit + arbitration cost)
-    const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(estimatedArbitrationCost);
+    console.log("Arbitrator address:", arbitratorAddress);
+    console.log("Arbitrator extra data:", arbitratorExtraData);
+    
+    // Step 3: Create Kleros Liquid arbitrator contract instance
+    const arbitratorContract = new web3.eth.Contract(KLEROS_LIQUID_ABI as any, arbitratorAddress);
+    
+    // Step 4: Get actual arbitration cost
+    let arbitrationCost;
+    try {
+      arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
+      console.log("Arbitration cost from contract:", arbitrationCost);
+    } catch (error) {
+      console.error("Error getting arbitration cost:", error);
+      // Fallback to estimated value if there's an error
+      arbitrationCost = web3.utils.toWei("0.05", "ether");
+      console.log("Using fallback arbitration cost:", arbitrationCost);
+    }
+    
+    // Step 5: Calculate total deposit (submission deposit + arbitration cost)
+    const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(arbitrationCost);
     
     // Convert to ETH for display
     const submissionBaseDepositEth = web3.utils.fromWei(submissionBaseDeposit, "ether");
-    const arbitrationCostEth = web3.utils.fromWei(estimatedArbitrationCost, "ether");
+    const arbitrationCostEth = web3.utils.fromWei(arbitrationCost.toString(), "ether");
     const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
     
     // Add a small buffer (10%) to account for gas price fluctuations
     const bufferAmount = (Number(depositAmountEth) * 0.1).toFixed(5);
     const totalWithBuffer = (Number(depositAmountEth) + Number(bufferAmount)).toFixed(5);
+    
+    console.log("Deposit calculation breakdown:", {
+      submissionBaseDeposit: submissionBaseDepositEth,
+      arbitrationCost: arbitrationCostEth,
+      base_plus_arbitration: depositAmountEth,
+      buffer: bufferAmount,
+      totalWithBuffer
+    });
     
     return { 
       depositAmount: totalWithBuffer,

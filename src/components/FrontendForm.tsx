@@ -53,6 +53,8 @@ export function FrontendForm() {
       try {
         setIsLoadingDeposit(true);
         const { depositAmount, breakdown } = await getSubmissionDepositAmount();
+        console.log("Fetched deposit amount:", depositAmount);
+        console.log("Breakdown:", breakdown);
         setDepositAmount(depositAmount);
         setDepositBreakdown(breakdown);
       } catch (error) {
