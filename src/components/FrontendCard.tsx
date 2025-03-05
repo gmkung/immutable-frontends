@@ -1,4 +1,3 @@
-
 import { LItem, ItemProp } from "@/types";
 import { copyToClipboard, formatDate, getIPFSGatewayURL, getPropValue, truncateMiddle } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -93,11 +92,11 @@ export function FrontendCard({ item }: FrontendCardProps) {
       // Different actions based on status
       if (currentAction === "remove") {
         // Request to remove item with evidence
-        await removeItem(item.data, ipfsURI);
+        await removeItem(item.itemID, ipfsURI);
         toast.success("Removal request submitted successfully");
       } else if (currentAction === "challenge") {
         // Challenge the current request with evidence
-        await challengeRequest(item.data, ipfsURI);
+        await challengeRequest(item.itemID, ipfsURI);
         toast.success("Challenge submitted successfully");
       }
       

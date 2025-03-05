@@ -16,58 +16,59 @@ interface EvidenceModalProps {
   isLoading: boolean;
 }
 
-export function EvidenceModal({ 
-  isOpen, 
-  onClose, 
-  onEvidenceSubmit, 
-  title, 
-  action, 
-  isLoading 
+export function EvidenceModal({
+  isOpen,
+  onClose,
+  onEvidenceSubmit,
+  title,
+  action,
+  isLoading
 }: EvidenceModalProps) {
   const [evidenceTitle, setEvidenceTitle] = useState("");
   const [evidenceDescription, setEvidenceDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!evidenceTitle.trim()) {
       toast.error("Please provide a title for your evidence");
       return;
     }
-    
+
     if (!evidenceDescription.trim()) {
       toast.error("Please provide a description for your evidence");
       return;
     }
-    
+
     try {
       setIsUploading(true);
-      
+
       // Create evidence JSON object
       const evidenceData = {
         title: evidenceTitle,
         description: evidenceDescription
       };
-      
+
       // Upload to IPFS
       const ipfsURI = await uploadJSONToIPFS(evidenceData);
-      
+
       // Pass the IPFS URI back to the parent component
       onEvidenceSubmit(ipfsURI);
-      
-      // Reset form
-      setEvidenceTitle("");
-      setEvidenceDescription("");
-      
+
+
+
     } catch (error) {
       console.error("Failed to upload evidence:", error);
       toast.error("Failed to upload evidence to IPFS");
     } finally {
       setIsUploading(false);
+      // Reset form
+      setEvidenceTitle("");
+      setEvidenceDescription("");
     }
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -103,20 +104,20 @@ export function EvidenceModal({
             />
           </div>
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={onClose}
               disabled={isUploading || isLoading}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               type="submit"
               disabled={isUploading || isLoading}
             >
-              {isUploading || isLoading ? 
-                `${isUploading ? 'Uploading...' : 'Processing...'}` : 
+              {isUploading || isLoading ?
+                `${isUploading ? 'Uploading...' : 'Processing...'}` :
                 `Submit ${action === 'remove' ? 'Removal' : 'Challenge'}`}
             </Button>
           </DialogFooter>
