@@ -1,494 +1,277 @@
-import { Web3Error } from "@/types";
+import { Web3, Contract } from "web3";
 import { toast } from "sonner";
-import LCURATE_ABI from "@/constants/lcurate_ABI.json";
-import KLEROS_LIQUID_ABI from "@/constants/KlerosLiquid_ABI.json";
+import LCURATE_ABI from "../constants/lcurate_ABI.json";
 
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
+// Constants
+const REGISTRY_ADDRESS = "0xbcff87C2BdC8E3e29811e7AC5A631F0CdEc9CeD8"; // Main registry address
 
-const CONTRACT_ADDRESS = "0xda03509Bb770061A61615AD8Fc8e1858520eBd86"; // Kleros Curate TCR Address
+// Initialize Web3
+let web3: Web3;
+let registry: Contract<typeof LCURATE_ABI>;
 
-export async function connectWallet(): Promise<string> {
-  if (!window.ethereum) {
-    throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
-  }
-
-  try {
-    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-    return accounts[0];
-  } catch (error: any) {
-    console.error("Error connecting wallet:", error);
-    throw new Error(`Failed to connect wallet: ${error.message}`);
-  }
-}
-
-export async function getCurrentAccount(): Promise<string | null> {
-  if (!window.ethereum) return null;
-  
-  try {
-    const accounts = await window.ethereum.request({ method: "eth_accounts" });
-    return accounts[0] || null;
-  } catch (error) {
-    console.error("Error getting current account:", error);
-    return null;
-  }
-}
-
-export async function getChallengePeriodDurationInDays(): Promise<number> {
-  try {
-    // Create Web3 instance
-    const Web3 = (await import("web3")).default;
-    const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
-    
-    // Create TCR contract instance
-    const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
-    
-    // Get challengePeriodDuration in seconds
-    const challengePeriodInSeconds = await tcrContract.methods.challengePeriodDuration().call();
-    
-    // Convert seconds to days (86400 seconds in a day)
-    const challengePeriodInDays = Math.ceil(Number(challengePeriodInSeconds) / 86400);
-    
-    return challengePeriodInDays;
-  } catch (error) {
-    console.error("Error getting challenge period duration:", error);
-    throw new Error("Failed to retrieve challenge period duration");
-  }
-}
-
-export async function getSubmissionDepositAmount(): Promise<{ 
-  depositAmount: string, 
-  depositInWei: string,
-  breakdown: {
-    submissionBaseDeposit: string,
-    arbitrationCost: string,
-    total: string
-  },
-  challengePeriodDays: number
-}> {
-  try {
-    // Create Web3 instance
-    const Web3 = (await import("web3")).default;
-    const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
-    
-    // Get challenge period duration
-    const challengePeriodDays = await getChallengePeriodDurationInDays();
-    
-    // Create TCR contract instance
-    const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
-    
-    // Step 1: Get submissionBaseDeposit
-    const submissionBaseDepositResult = await tcrContract.methods.submissionBaseDeposit().call();
-    const submissionBaseDeposit = submissionBaseDepositResult ? submissionBaseDepositResult.toString() : "0";
-    
-    // Step 2: Get arbitrator address and extra data
-    const arbitratorAddress = await tcrContract.methods.arbitrator().call();
-    const arbitratorExtraData = await tcrContract.methods.arbitratorExtraData().call();
-    
-    console.log("Arbitrator address:", arbitratorAddress);
-    console.log("Arbitrator extra data:", arbitratorExtraData);
-    
-    // Step 3: Create Kleros Liquid arbitrator contract instance
-    // Check if arbitratorAddress is a valid string
-    let arbitrationCost;
-    if (arbitratorAddress && typeof arbitratorAddress === 'string') {
-      try {
-        const arbitratorContract = new web3.eth.Contract(KLEROS_LIQUID_ABI as any, arbitratorAddress);
-        
-        // Step 4: Get actual arbitration cost
-        arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
-        console.log("Arbitration cost from contract:", arbitrationCost);
-      } catch (error) {
-        console.error("Error getting arbitration cost:", error);
-        throw new Error("Failed to retrieve arbitration cost");
-      }
-    } else {
-      console.warn("Invalid arbitrator address");
-      throw new Error("Invalid arbitrator address");
+async function initWeb3() {
+  if (typeof window.ethereum !== 'undefined') {
+    try {
+      // Request account access
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      
+      web3 = new Web3(window.ethereum);
+      registry = new web3.eth.Contract(LCURATE_ABI, REGISTRY_ADDRESS);
+      
+      return true;
+    } catch (error) {
+      console.error("User denied account access", error);
+      toast.error("Please connect your wallet to continue");
+      return false;
     }
+  } else {
+    console.error("Ethereum provider not found");
+    toast.error("Please install MetaMask or another Web3 wallet");
+    return false;
+  }
+}
+
+export async function getSubmissionDepositAmount(): Promise<string> {
+  if (!web3 || !registry) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
+  }
+
+  try {
+    // Get the submission base deposit
+    const baseDeposit = await registry.methods.submissionBaseDeposit().call();
     
-    // Step 5: Calculate total deposit (submission deposit + arbitration cost)
-    const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(arbitrationCost);
+    // Get arbitration cost
+    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    // Convert to ETH for display
-    const submissionBaseDepositEth = web3.utils.fromWei(submissionBaseDeposit, "ether");
-    const arbitrationCostEth = web3.utils.fromWei(arbitrationCost.toString(), "ether");
-    const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
+    const arbitratorContract = new web3.eth.Contract(
+      // Simplified Arbitrator ABI with just the arbitrationCost function
+      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitrator
+    );
     
-    console.log("Deposit calculation breakdown:", {
-      submissionBaseDeposit: submissionBaseDepositEth,
-      arbitrationCost: arbitrationCostEth,
-      base_plus_arbitration: depositAmountEth,
-      total: depositAmountEth
-    });
+    const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
-    return { 
-      depositAmount: depositAmountEth,
-      depositInWei: totalDepositWei.toString(),
-      breakdown: {
-        submissionBaseDeposit: submissionBaseDepositEth,
-        arbitrationCost: arbitrationCostEth,
-        total: depositAmountEth
-      },
-      challengePeriodDays
-    };
+    // Calculate total deposit required
+    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
+    
+    return totalDeposit.toString();
   } catch (error) {
     console.error("Error getting submission deposit amount:", error);
-    throw new Error(`Failed to calculate required deposit amount: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw error;
   }
 }
 
-export async function getSubmissionChallengeDepositAmount(): Promise<{ 
-  depositAmount: string, 
-  depositInWei: string,
-  breakdown: {
-    submissionChallengeBaseDeposit: string,
-    arbitrationCost: string,
-    total: string
-  },
-  challengePeriodDays: number
-}> {
+export async function getSubmissionChallengeDepositAmount(): Promise<string> {
+  if (!web3 || !registry) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
+  }
+
   try {
-    // Create Web3 instance
-    const Web3 = (await import("web3")).default;
-    const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
+    // Get the submission challenge base deposit
+    const baseDeposit = await registry.methods.submissionChallengeBaseDeposit().call();
     
-    // Get challenge period duration
-    const challengePeriodDays = await getChallengePeriodDurationInDays();
+    // Get arbitration cost
+    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    // Create TCR contract instance
-    const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    const arbitratorContract = new web3.eth.Contract(
+      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitrator
+    );
     
-    // Step 1: Get submissionChallengeBaseDeposit
-    const submissionChallengeBaseDepositResult = await tcrContract.methods.submissionChallengeBaseDeposit().call();
-    const submissionChallengeBaseDeposit = submissionChallengeBaseDepositResult ? submissionChallengeBaseDepositResult.toString() : "0";
+    const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
-    // Step 2: Get arbitrator address and extra data
-    const arbitratorAddress = await tcrContract.methods.arbitrator().call();
-    const arbitratorExtraData = await tcrContract.methods.arbitratorExtraData().call();
+    // Calculate total deposit required
+    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
     
-    console.log("Arbitrator address:", arbitratorAddress);
-    console.log("Arbitrator extra data:", arbitratorExtraData);
-    
-    // Step 3: Create Kleros Liquid arbitrator contract instance
-    // Check if arbitratorAddress is a valid string
-    let arbitrationCost;
-    if (arbitratorAddress && typeof arbitratorAddress === 'string') {
-      try {
-        const arbitratorContract = new web3.eth.Contract(KLEROS_LIQUID_ABI as any, arbitratorAddress);
-        
-        // Step 4: Get actual arbitration cost
-        arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
-        console.log("Arbitration cost from contract:", arbitrationCost);
-      } catch (error) {
-        console.error("Error getting arbitration cost:", error);
-        throw new Error("Failed to retrieve arbitration cost");
-      }
-    } else {
-      console.warn("Invalid arbitrator address");
-      throw new Error("Invalid arbitrator address");
-    }
-    
-    // Step 5: Calculate total deposit (submission challenge deposit + arbitration cost)
-    const totalDepositWei = BigInt(submissionChallengeBaseDeposit) + BigInt(arbitrationCost);
-    
-    // Convert to ETH for display
-    const submissionChallengeBaseDepositEth = web3.utils.fromWei(submissionChallengeBaseDeposit, "ether");
-    const arbitrationCostEth = web3.utils.fromWei(arbitrationCost.toString(), "ether");
-    const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
-    
-    console.log("Challenge Deposit calculation breakdown:", {
-      submissionChallengeBaseDeposit: submissionChallengeBaseDepositEth,
-      arbitrationCost: arbitrationCostEth,
-      base_plus_arbitration: depositAmountEth,
-      total: depositAmountEth
-    });
-    
-    return { 
-      depositAmount: depositAmountEth,
-      depositInWei: totalDepositWei.toString(),
-      breakdown: {
-        submissionChallengeBaseDeposit: submissionChallengeBaseDepositEth,
-        arbitrationCost: arbitrationCostEth,
-        total: depositAmountEth
-      },
-      challengePeriodDays
-    };
+    return totalDeposit.toString();
   } catch (error) {
     console.error("Error getting submission challenge deposit amount:", error);
-    throw new Error(`Failed to calculate required challenge deposit amount: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw error;
   }
 }
 
-export async function getRemovalDepositAmount(): Promise<{ 
-  depositAmount: string, 
-  depositInWei: string,
-  breakdown: {
-    removalBaseDeposit: string,
-    arbitrationCost: string,
-    total: string
-  },
-  challengePeriodDays: number
-}> {
+export async function getRemovalDepositAmount(): Promise<string> {
+  if (!web3 || !registry) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
+  }
+
   try {
-    // Create Web3 instance
-    const Web3 = (await import("web3")).default;
-    const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
+    // Get the removal base deposit
+    const baseDeposit = await registry.methods.removalBaseDeposit().call();
     
-    // Get challenge period duration
-    const challengePeriodDays = await getChallengePeriodDurationInDays();
+    // Get arbitration cost
+    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    // Create TCR contract instance
-    const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    const arbitratorContract = new web3.eth.Contract(
+      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitrator
+    );
     
-    // Step 1: Get removalBaseDeposit
-    const removalBaseDepositResult = await tcrContract.methods.removalBaseDeposit().call();
-    const removalBaseDeposit = removalBaseDepositResult ? removalBaseDepositResult.toString() : "0";
+    const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
-    // Step 2: Get arbitrator address and extra data
-    const arbitratorAddress = await tcrContract.methods.arbitrator().call();
-    const arbitratorExtraData = await tcrContract.methods.arbitratorExtraData().call();
+    // Calculate total deposit required
+    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
     
-    console.log("Arbitrator address:", arbitratorAddress);
-    console.log("Arbitrator extra data:", arbitratorExtraData);
-    
-    // Step 3: Create Kleros Liquid arbitrator contract instance
-    // Check if arbitratorAddress is a valid string
-    let arbitrationCost;
-    if (arbitratorAddress && typeof arbitratorAddress === 'string') {
-      try {
-        const arbitratorContract = new web3.eth.Contract(KLEROS_LIQUID_ABI as any, arbitratorAddress);
-        
-        // Step 4: Get actual arbitration cost
-        arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
-        console.log("Arbitration cost from contract:", arbitrationCost);
-      } catch (error) {
-        console.error("Error getting arbitration cost:", error);
-        throw new Error("Failed to retrieve arbitration cost");
-      }
-    } else {
-      console.warn("Invalid arbitrator address");
-      throw new Error("Invalid arbitrator address");
-    }
-    
-    // Step 5: Calculate total deposit (removal deposit + arbitration cost)
-    const totalDepositWei = BigInt(removalBaseDeposit) + BigInt(arbitrationCost);
-    
-    // Convert to ETH for display
-    const removalBaseDepositEth = web3.utils.fromWei(removalBaseDeposit, "ether");
-    const arbitrationCostEth = web3.utils.fromWei(arbitrationCost.toString(), "ether");
-    const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
-    
-    console.log("Removal Deposit calculation breakdown:", {
-      removalBaseDeposit: removalBaseDepositEth,
-      arbitrationCost: arbitrationCostEth,
-      base_plus_arbitration: depositAmountEth,
-      total: depositAmountEth
-    });
-    
-    return { 
-      depositAmount: depositAmountEth,
-      depositInWei: totalDepositWei.toString(),
-      breakdown: {
-        removalBaseDeposit: removalBaseDepositEth,
-        arbitrationCost: arbitrationCostEth,
-        total: depositAmountEth
-      },
-      challengePeriodDays
-    };
+    return totalDeposit.toString();
   } catch (error) {
     console.error("Error getting removal deposit amount:", error);
-    throw new Error(`Failed to calculate required removal deposit amount: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw error;
   }
 }
 
-export async function getRemovalChallengeDepositAmount(): Promise<{ 
-  depositAmount: string, 
-  depositInWei: string,
-  breakdown: {
-    removalChallengeBaseDeposit: string,
-    arbitrationCost: string,
-    total: string
-  },
-  challengePeriodDays: number
-}> {
+export async function getRemovalChallengeDepositAmount(): Promise<string> {
+  if (!web3 || !registry) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
+  }
+
   try {
-    // Create Web3 instance
-    const Web3 = (await import("web3")).default;
-    const web3 = new Web3(window.ethereum || "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161");
+    // Get the removal challenge base deposit
+    const baseDeposit = await registry.methods.removalChallengeBaseDeposit().call();
     
-    // Get challenge period duration
-    const challengePeriodDays = await getChallengePeriodDurationInDays();
+    // Get arbitration cost
+    const arbitrator = await registry.methods.arbitrator().call();
+    const arbitratorExtraData = await registry.methods.arbitratorExtraData().call();
     
-    // Create TCR contract instance
-    const tcrContract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
+    const arbitratorContract = new web3.eth.Contract(
+      [{"constant":true,"inputs":[{"name":"_extraData","type":"bytes"}],"name":"arbitrationCost","outputs":[{"name":"cost","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"}],
+      arbitrator
+    );
     
-    // Step 1: Get removalChallengeBaseDeposit
-    const removalChallengeBaseDepositResult = await tcrContract.methods.removalChallengeBaseDeposit().call();
-    const removalChallengeBaseDeposit = removalChallengeBaseDepositResult ? removalChallengeBaseDepositResult.toString() : "0";
+    const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
-    // Step 2: Get arbitrator address and extra data
-    const arbitratorAddress = await tcrContract.methods.arbitrator().call();
-    const arbitratorExtraData = await tcrContract.methods.arbitratorExtraData().call();
+    // Calculate total deposit required
+    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
     
-    console.log("Arbitrator address:", arbitratorAddress);
-    console.log("Arbitrator extra data:", arbitratorExtraData);
-    
-    // Step 3: Create Kleros Liquid arbitrator contract instance
-    // Check if arbitratorAddress is a valid string
-    let arbitrationCost;
-    if (arbitratorAddress && typeof arbitratorAddress === 'string') {
-      try {
-        const arbitratorContract = new web3.eth.Contract(KLEROS_LIQUID_ABI as any, arbitratorAddress);
-        
-        // Step 4: Get actual arbitration cost
-        arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
-        console.log("Arbitration cost from contract:", arbitrationCost);
-      } catch (error) {
-        console.error("Error getting arbitration cost:", error);
-        throw new Error("Failed to retrieve arbitration cost");
-      }
-    } else {
-      console.warn("Invalid arbitrator address");
-      throw new Error("Invalid arbitrator address");
-    }
-    
-    // Step 5: Calculate total deposit (removal challenge deposit + arbitration cost)
-    const totalDepositWei = BigInt(removalChallengeBaseDeposit) + BigInt(arbitrationCost);
-    
-    // Convert to ETH for display
-    const removalChallengeBaseDepositEth = web3.utils.fromWei(removalChallengeBaseDeposit, "ether");
-    const arbitrationCostEth = web3.utils.fromWei(arbitrationCost.toString(), "ether");
-    const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
-    
-    console.log("Removal Challenge Deposit calculation breakdown:", {
-      removalChallengeBaseDeposit: removalChallengeBaseDepositEth,
-      arbitrationCost: arbitrationCostEth,
-      base_plus_arbitration: depositAmountEth,
-      total: depositAmountEth
-    });
-    
-    return { 
-      depositAmount: depositAmountEth,
-      depositInWei: totalDepositWei.toString(),
-      breakdown: {
-        removalChallengeBaseDeposit: removalChallengeBaseDepositEth,
-        arbitrationCost: arbitrationCostEth,
-        total: depositAmountEth
-      },
-      challengePeriodDays
-    };
+    return totalDeposit.toString();
   } catch (error) {
     console.error("Error getting removal challenge deposit amount:", error);
-    throw new Error(`Failed to calculate required removal challenge deposit amount: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw error;
   }
 }
 
-export async function submitToRegistry(ipfsPath: string): Promise<string> {
-  if (!window.ethereum) {
-    throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
+// Function to remove an item from the registry
+export async function removeItem(itemID: string, evidenceURI: string): Promise<void> {
+  if (!web3 || !registry) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
   }
 
-  // Ensure ipfsPath starts with "/ipfs/"
-  const formattedPath = ipfsPath.startsWith("/ipfs/") ? ipfsPath : `/ipfs/${ipfsPath}`;
-  
   try {
-    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-    const from = accounts[0];
-    
-    // Create Web3 instance
-    const Web3 = (await import("web3")).default;
-    const web3 = new Web3(window.ethereum);
-    
+    const accounts = await web3.eth.getAccounts();
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No connected accounts found");
+    }
+
     // Get required deposit amount
-    const { depositInWei } = await getSubmissionDepositAmount();
-    
-    // Create contract instance
-    const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
-    
-    // Estimate gas and get current gas price
-    const gasEstimate = await contract.methods.addItem(formattedPath).estimateGas({ 
-      from,
-      value: depositInWei 
-    });
-    const gasPrice = await web3.eth.getGasPrice();
-    
-    // Calculate gas with 20% buffer and convert to string
-    const gasBigInt = BigInt(gasEstimate);
-    const gasWithBuffer = (gasBigInt * BigInt(120) / BigInt(100)).toString();
-    
-    // Convert gasPrice to string
-    const gasPriceString = gasPrice.toString();
-    
-    // Submit transaction with the dynamic deposit amount
-    const txReceipt = await contract.methods.addItem(formattedPath).send({
-      from,
-      gas: gasWithBuffer,
-      gasPrice: gasPriceString,
-      value: depositInWei,
-    });
-    
-    return txReceipt.transactionHash;
-  } catch (error: any) {
-    console.error("Error submitting to registry:", error);
-    
-    // Format error for user
-    let errorMessage = "Failed to submit to registry";
-    
-    if (error.code === 4001) {
-      errorMessage = "Transaction rejected by user";
-    } else if (error.message) {
-      errorMessage = `Error: ${error.message}`;
+    const depositAmount = await getRemovalDepositAmount();
+    if (!depositAmount) {
+      throw new Error("Failed to retrieve deposit amount");
     }
     
-    throw new Error(errorMessage);
-  }
-}
-
-export function formatWalletAddress(address: string | null): string {
-  if (!address) return "Not connected";
-  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-}
-
-export function handleWeb3Error(error: any): string {
-  let message = "An unknown error occurred";
-  
-  if (typeof error === "string") {
-    message = error;
-  } else if (error?.message) {
-    message = error.message.replace("MetaMask Tx Signature: ", "");
+    // Format evidence URI to match expected format
+    const formattedEvidence = evidenceURI.startsWith('/ipfs/') 
+      ? evidenceURI 
+      : `/ipfs/${evidenceURI}`;
     
-    // Clean up common Web3 errors
-    if (message.includes("User denied")) {
-      message = "Transaction was rejected";
-    } else if (message.includes("insufficient funds")) {
-      message = "Insufficient funds for transaction";
-    }
+    // Submit transaction
+    await registry.methods.removeItem(itemID, formattedEvidence).send({
+      from: accounts[0],
+      value: depositAmount,
+      gas: 500000 // Gas estimate
+    });
+    
+  } catch (error) {
+    console.error("Error removing item:", error);
+    throw error;
   }
-  
-  // Limit message length
-  if (message.length > 100) {
-    message = message.substring(0, 100) + "...";
-  }
-  
-  return message;
 }
 
-export async function switchToMainnet(): Promise<boolean> {
-  if (!window.ethereum) return false;
-  
+// Function to challenge a request
+export async function challengeRequest(itemID: string, evidenceURI: string): Promise<void> {
+  if (!web3 || !registry) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
+  }
+
   try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: "0x1" }], // Ethereum Mainnet
+    const accounts = await web3.eth.getAccounts();
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No connected accounts found");
+    }
+
+    // Get item info to determine which deposit to use
+    const itemInfo = await registry.methods.getItemInfo(itemID).call();
+    const requestID = Number(itemInfo.numberOfRequests) - 1;
+    
+    // Get request info
+    const requestInfo = await registry.methods.getRequestInfo(itemID, requestID).call();
+    
+    // Determine which deposit to use based on the current request status
+    let depositAmount;
+    if (requestInfo.parties[1] === "0x0000000000000000000000000000000000000000") {
+      // This is a registration request (submitter is in position 0)
+      depositAmount = await getSubmissionChallengeDepositAmount();
+    } else {
+      // This is a removal request (submitter is in position 1)
+      depositAmount = await getRemovalChallengeDepositAmount();
+    }
+
+    if (!depositAmount) {
+      throw new Error("Failed to retrieve deposit amount");
+    }
+    
+    // Format evidence URI to match expected format
+    const formattedEvidence = evidenceURI.startsWith('/ipfs/') 
+      ? evidenceURI 
+      : `/ipfs/${evidenceURI}`;
+    
+    // Submit transaction
+    await registry.methods.challengeRequest(itemID, formattedEvidence).send({
+      from: accounts[0],
+      value: depositAmount,
+      gas: 500000 // Gas estimate
     });
-    return true;
-  } catch (error: any) {
-    console.error("Error switching network:", error);
-    toast.error("Please switch to Ethereum Mainnet");
-    return false;
+    
+  } catch (error) {
+    console.error("Error challenging request:", error);
+    throw error;
+  }
+}
+
+export async function submitItem(itemString: string): Promise<void> {
+  if (!web3 || !registry) {
+    const initialized = await initWeb3();
+    if (!initialized) throw new Error("Failed to initialize Web3");
+  }
+
+  try {
+    const accounts = await web3.eth.getAccounts();
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No connected accounts found");
+    }
+
+    // Get required deposit amount
+    const depositAmount = await getSubmissionDepositAmount();
+    if (!depositAmount) {
+      throw new Error("Failed to retrieve deposit amount");
+    }
+
+    // Submit transaction
+    await registry.methods.addItem(itemString).send({
+      from: accounts[0],
+      value: depositAmount,
+      gas: 500000 // Gas estimate
+    });
+
+  } catch (error) {
+    console.error("Error submitting item:", error);
+    throw error;
   }
 }

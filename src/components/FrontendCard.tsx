@@ -5,8 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ExternalLink, Copy, Database, Github, CircuitBoard, Waves, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { ExternalLink, Copy, Database, Github, CircuitBoard, Waves, CheckCircle, Clock, AlertTriangle, Trash, Ban } from "lucide-react";
 import { useState } from "react";
+import { EvidenceModal } from "./EvidenceModal";
+import { toast } from "sonner";
+import { challengeRequest, removeItem } from "@/lib/web3";
 
 interface FrontendCardProps {
   item: LItem;
@@ -14,6 +17,9 @@ interface FrontendCardProps {
 
 export function FrontendCard({ item }: FrontendCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
+  const [actionType, setActionType] = useState<"remove" | "challenge">("remove");
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const props = item.metadata.props;
   const name = getPropValue(props, "Name");
@@ -45,6 +51,76 @@ export function FrontendCard({ item }: FrontendCardProps) {
   };
   
   const statusInfo = getStatusInfo(item.status);
+
+  const openEvidenceModal = (type: "remove" | "challenge") => {
+    setActionType(type);
+    setEvidenceModalOpen(true);
+  };
+
+  const handleSubmitEvidence = async (evidenceURI: string) => {
+    try {
+      setIsProcessing(true);
+      
+      if (actionType === "remove") {
+        await removeItem(item.itemID, evidenceURI);
+        toast.success("Removal request submitted successfully");
+      } else {
+        await challengeRequest(item.itemID, evidenceURI);
+        toast.success("Challenge submitted successfully");
+      }
+
+    } catch (error) {
+      console.error("Transaction error:", error);
+      toast.error("Failed to process transaction. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const renderActionButton = () => {
+    if (isProcessing) {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs"
+          disabled
+        >
+          Processing...
+        </Button>
+      );
+    }
+
+    switch (item.status) {
+      case "Registered":
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs text-destructive hover:bg-destructive/10"
+            onClick={() => openEvidenceModal("remove")}
+          >
+            <Trash className="h-3.5 w-3.5 mr-1" />
+            Suggest Removal
+          </Button>
+        );
+      case "RegistrationRequested":
+      case "ClearingRequested":
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs text-destructive hover:bg-destructive/10"
+            onClick={() => openEvidenceModal("challenge")}
+          >
+            <Ban className="h-3.5 w-3.5 mr-1" />
+            Challenge Request
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
   
   return (
     <Card className="glass-card overflow-hidden animate-slide-up w-full">
@@ -111,7 +187,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
           <div className="flex items-center gap-2 text-sm">
             <CircuitBoard className="h-4 w-4 text-hawaii-teal" />
             <span className="font-medium mr-1">Commit:</span>
-            <span className="ipfs-hash flex-1">{truncateMiddle(commitHash, 7, 0)}</span>
+            <span className="ipfs-hash flex-1">{commitHash}</span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -166,6 +242,8 @@ export function FrontendCard({ item }: FrontendCardProps) {
             </Button>
           )}
           
+          {renderActionButton()}
+          
           <Button
             variant="default"
             size="sm"
@@ -177,6 +255,19 @@ export function FrontendCard({ item }: FrontendCardProps) {
           </Button>
         </div>
       </CardFooter>
+      
+      <EvidenceModal
+        isOpen={evidenceModalOpen}
+        onClose={() => setEvidenceModalOpen(false)}
+        onSubmit={handleSubmitEvidence}
+        title={actionType === "remove" ? "Submit Removal Request" : "Challenge Request"}
+        description={
+          actionType === "remove" 
+            ? "Provide evidence for why this frontend should be removed from the registry." 
+            : "Provide evidence to challenge this request."
+        }
+        actionLabel={actionType === "remove" ? "Submit Removal" : "Submit Challenge"}
+      />
     </Card>
   );
 }
