@@ -72,7 +72,7 @@ export async function getSubmissionDepositAmount() {
     const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
     // Calculate total deposit required
-    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
+    const totalDeposit = BigInt(baseDeposit.toString()) + BigInt(arbitrationCost.toString());
     
     // Convert from wei to ETH with 3 decimal places
     const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
@@ -125,7 +125,7 @@ export async function getSubmissionChallengeDepositAmount() {
     const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
     // Calculate total deposit required
-    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
+    const totalDeposit = BigInt(baseDeposit.toString()) + BigInt(arbitrationCost.toString());
     
     // Convert from wei to ETH with 3 decimal places
     const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
@@ -169,7 +169,7 @@ export async function getRemovalDepositAmount() {
     const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
     // Calculate total deposit required
-    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
+    const totalDeposit = BigInt(baseDeposit.toString()) + BigInt(arbitrationCost.toString());
     
     // Convert from wei to ETH with 3 decimal places
     const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
@@ -213,7 +213,7 @@ export async function getRemovalChallengeDepositAmount() {
     const arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
     
     // Calculate total deposit required
-    const totalDeposit = BigInt(baseDeposit) + BigInt(arbitrationCost);
+    const totalDeposit = BigInt(baseDeposit.toString()) + BigInt(arbitrationCost.toString());
     
     // Convert from wei to ETH with 3 decimal places
     const depositInEth = web3!.utils.fromWei(totalDeposit.toString(), 'ether');
@@ -259,7 +259,7 @@ export async function removeItem(itemID: string, evidenceURI: string): Promise<v
     await registry.methods.removeItem(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
-      gas: "500000" // Gas estimate as string
+      gas: 500000 // Gas estimate as number
     });
     
   } catch (error) {
@@ -289,7 +289,8 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
       throw new Error("Could not retrieve item information");
     }
     
-    const requestID = Number(itemInfo.numberOfRequests) - 1;
+    // Safely get the number of requests
+    const requestID = parseInt(itemInfo.numberOfRequests?.toString() || "0") - 1;
     
     // Get request info
     const requestInfo = await registry.methods.getRequestInfo(itemID, requestID).call();
@@ -297,9 +298,18 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
       throw new Error("Could not retrieve request information");
     }
     
+    // Check if parties property exists and is an array
+    if (!requestInfo.parties || !Array.isArray(requestInfo.parties)) {
+      throw new Error("Invalid request info structure");
+    }
+    
     // Determine which deposit to use based on the current request status
     let depositAmount: string;
-    if (requestInfo.parties[1] === "0x0000000000000000000000000000000000000000") {
+    // Check the zero address
+    const zeroAddress = "0x0000000000000000000000000000000000000000";
+    
+    // Safely access the parties array
+    if (requestInfo.parties[1] === zeroAddress) {
       // This is a registration request (submitter is in position 0)
       depositAmount = await getSubmissionChallengeDepositAmount();
     } else {
@@ -323,7 +333,7 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
     await registry.methods.challengeRequest(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
-      gas: "500000" // Gas estimate as string
+      gas: 500000 // Gas estimate as number
     });
     
   } catch (error) {
@@ -359,7 +369,7 @@ export async function submitItem(itemString: string): Promise<void> {
     await registry.methods.addItem(itemString).send({
       from: accounts[0],
       value: depositWei,
-      gas: "500000" // Gas estimate as string
+      gas: 500000 // Gas estimate as number
     });
   } catch (error) {
     console.error("Error submitting item:", error);
