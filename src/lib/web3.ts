@@ -59,7 +59,7 @@ export async function getSubmissionDepositAmount(): Promise<{ depositAmount: str
     const estimatedArbitrationCost = web3.utils.toWei("0.05", "ether");
     
     // Step 3: Calculate total deposit (submission deposit + arbitration cost)
-    const totalDepositWei = BigInt(submissionBaseDeposit) + BigInt(estimatedArbitrationCost);
+    const totalDepositWei = BigInt(submissionBaseDeposit.toString()) + BigInt(estimatedArbitrationCost);
     
     // Convert to ETH for display
     const depositAmountEth = web3.utils.fromWei(totalDepositWei.toString(), "ether");
