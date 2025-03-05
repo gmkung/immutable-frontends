@@ -20,7 +20,7 @@ export interface DepositDetails {
 
 export interface ContractInstances {
   web3: Web3;
-  registry: Contract<any>; // Added the generic type parameter
+  registry: Contract<any>; // Using 'any' for contract types
 }
 
 // Type for arbitrator ABI

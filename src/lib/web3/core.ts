@@ -18,7 +18,12 @@ export async function initWeb3(): Promise<ContractInstances | null> {
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       
       const web3 = new Web3(window.ethereum);
-      const registry = new web3.eth.Contract(LCURATE_ABI, REGISTRY_ADDRESS);
+      
+      // Create contract instance with explicit types
+      const registry = new web3.eth.Contract(
+        LCURATE_ABI,
+        REGISTRY_ADDRESS
+      );
       
       // Cache instances
       web3Instance = web3;
@@ -143,6 +148,11 @@ export async function switchToMainnet(): Promise<void> {
  */
 export function handleWeb3Error(error: any): string {
   console.error("Web3 error:", error);
+  
+  // Enhanced error handling for ABI errors specifically
+  if (error.name === "AbiError" || (error.message && error.message.includes("ABI"))) {
+    return "Contract interaction error: There might be an issue with the contract ABI or connection. Please try again later.";
+  }
   
   // Handle common MetaMask errors
   if (error.code === 4001) {

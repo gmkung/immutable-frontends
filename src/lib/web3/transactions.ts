@@ -1,3 +1,4 @@
+
 import { getWeb3Instances } from "./core";
 import {
   getSubmissionDepositAmount,
@@ -7,16 +8,24 @@ import {
 } from "./deposits";
 import { ZERO_ADDRESS } from "./types";
 
-// Add this interface near the top of the file
+// Improved interfaces with proper typing
 interface ItemInfo {
+  status: string | number;
   numberOfRequests: string | number;
-  // add other properties if needed
+  sumDeposit: string | number;
 }
 
-// Add this interface near the top with the other interface
 interface RequestInfo {
+  disputed: boolean;
+  disputeID: string | number;
+  submissionTime: string | number;
+  resolved: boolean;
   parties: string[];
-  // add other properties if needed
+  numberOfRounds: string | number;
+  ruling: string | number;
+  requestArbitrator: string;
+  requestArbitratorExtraData: string;
+  metaEvidenceID: string | number;
 }
 
 /**
@@ -48,7 +57,7 @@ export async function removeItem(
     // Convert ETH to Wei for the transaction
     const depositWei = web3.utils.toWei(depositAmount, "ether");
 
-    // Submit transaction - use string for gas (converted from number)
+    // Submit transaction - use string for gas
     await registry.methods.removeItem(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
@@ -76,40 +85,33 @@ export async function challengeRequest(
     }
 
     // Get item info to determine which deposit to use
-    const itemInfo = (await registry.methods
-      .getItemInfo(itemID)
-      .call()) as ItemInfo;
+    const itemInfo = await registry.methods.getItemInfo(itemID).call() as ItemInfo;
+    
     if (!itemInfo) {
       throw new Error("Could not retrieve item information");
     }
 
     // Safely get the number of requests
     let requestID = 0;
-    if (itemInfo && typeof itemInfo === "object") {
-      const requestsCount = itemInfo.numberOfRequests ?? "0";
-      const parsedRequestsCount = parseInt(requestsCount.toString(), 10);
-      if (parsedRequestsCount !== 0) {
-        requestID = parsedRequestsCount - 1;
-      }
+    const requestsCount = itemInfo.numberOfRequests ? Number(itemInfo.numberOfRequests) : 0;
+    if (requestsCount > 0) {
+      requestID = requestsCount - 1;
     }
 
     // Get request info
-    const requestInfo = (await registry.methods
-      .getRequestInfo(itemID, requestID)
-      .call()) as RequestInfo;
+    const requestInfo = await registry.methods.getRequestInfo(itemID, requestID).call() as RequestInfo;
+    
     if (!requestInfo) {
       throw new Error("Could not retrieve request information");
     }
 
-    // Check if parties property exists and is an array with at least 2 elements
+    // Check if parties property exists and is an array
     let depositAmount: string;
 
     // Safely access the parties array
     if (
-      requestInfo &&
-      typeof requestInfo === "object" &&
-      requestInfo.parties &&
-      Array.isArray(requestInfo.parties) &&
+      requestInfo.parties && 
+      Array.isArray(requestInfo.parties) && 
       requestInfo.parties.length >= 2 &&
       requestInfo.parties[1] === ZERO_ADDRESS
     ) {
@@ -132,7 +134,7 @@ export async function challengeRequest(
     // Convert ETH to Wei for the transaction
     const depositWei = web3.utils.toWei(depositAmount, "ether");
 
-    // Submit transaction - use string for gas (converted from number)
+    // Submit transaction - use string for gas
     await registry.methods.challengeRequest(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
@@ -165,7 +167,7 @@ export async function submitItem(itemString: string): Promise<void> {
     // Convert ETH to Wei for the transaction
     const depositWei = web3.utils.toWei(depositInfo.depositAmount, "ether");
 
-    // Submit transaction - use string for gas (converted from number)
+    // Submit transaction - use string for gas
     await registry.methods.addItem(itemString).send({
       from: accounts[0],
       value: depositWei,
