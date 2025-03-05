@@ -1,3 +1,4 @@
+
 import { LItem, ItemProp } from "@/types";
 import { copyToClipboard, formatDate, getIPFSGatewayURL, getPropValue, truncateMiddle } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -138,11 +139,11 @@ export function FrontendCard({ item }: FrontendCardProps) {
   
   return (
     <Card className="glass-card overflow-hidden animate-slide-up w-full">
-      <CardHeader className="pb-4 relative">
+      <CardHeader className="pb-2 relative">
         <div className="flex items-start justify-between">
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="mb-2 bg-hawaii-blue/10 text-hawaii-blue backdrop-blur-sm border-hawaii-blue/20">
+              <Badge variant="outline" className="bg-hawaii-blue/10 text-hawaii-blue backdrop-blur-sm border-hawaii-blue/20">
                 <Waves className="h-3 w-3 mr-1" />
                 {networkName}
               </Badge>
@@ -152,19 +153,21 @@ export function FrontendCard({ item }: FrontendCardProps) {
                 {statusInfo.label}
               </Badge>
             </div>
-            <CardTitle className="text-xl font-semibold">{name}</CardTitle>
-            <CardDescription className="line-clamp-2 mt-1">
+            <CardTitle className="text-xl font-semibold mt-2">{name}</CardTitle>
+            <CardDescription className="line-clamp-2 mt-2">
               {description}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="pb-4 space-y-3 relative z-10">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <Database className="h-4 w-4 text-hawaii-teal" />
-            <span className="font-medium mr-1">Locator ID:</span>
+      <CardContent className="pb-3 space-y-4 relative z-10 px-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-sm">
+            <div className="w-5 flex-shrink-0 flex justify-center">
+              <Database className="h-4 w-4 text-hawaii-teal" />
+            </div>
+            <span className="font-medium mr-1 whitespace-nowrap">Locator ID:</span>
             <span className="ipfs-hash flex-1">{truncateMiddle(locatorId, 8, 6)}</span>
             <TooltipProvider>
               <Tooltip>
@@ -185,9 +188,11 @@ export function FrontendCard({ item }: FrontendCardProps) {
             </TooltipProvider>
           </div>
           
-          <div className="flex items-center gap-2 text-sm">
-            <Github className="h-4 w-4 text-hawaii-teal" />
-            <span className="font-medium mr-1">Repository:</span>
+          <div className="flex items-center gap-3 text-sm">
+            <div className="w-5 flex-shrink-0 flex justify-center">
+              <Github className="h-4 w-4 text-hawaii-teal" />
+            </div>
+            <span className="font-medium mr-1 whitespace-nowrap">Repository:</span>
             <a 
               href={repoUrl} 
               target="_blank" 
@@ -198,9 +203,11 @@ export function FrontendCard({ item }: FrontendCardProps) {
             </a>
           </div>
           
-          <div className="flex items-center gap-2 text-sm">
-            <CircuitBoard className="h-4 w-4 text-hawaii-teal" />
-            <span className="font-medium mr-1">Commit:</span>
+          <div className="flex items-center gap-3 text-sm">
+            <div className="w-5 flex-shrink-0 flex justify-center">
+              <CircuitBoard className="h-4 w-4 text-hawaii-teal" />
+            </div>
+            <span className="font-medium mr-1 whitespace-nowrap">Commit:</span>
             <span className="ipfs-hash flex-1">{truncateMiddle(commitHash, 7, 0)}</span>
             <TooltipProvider>
               <Tooltip>
@@ -228,7 +235,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         </div>
         
         {isExpanded && additionalInfo !== "N/A" && (
-          <div className="mt-4 pt-4 border-t border-hawaii-teal/10 text-sm">
+          <div className="mt-5 pt-4 border-t border-hawaii-teal/10 text-sm">
             <h4 className="font-medium mb-2">Additional Information</h4>
             <div className="whitespace-pre-wrap text-muted-foreground text-xs">
               {additionalInfo}
@@ -237,7 +244,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         )}
       </CardContent>
       
-      <CardFooter className="flex justify-between items-center pt-2 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10">
+      <CardFooter className="flex justify-between items-center pt-2 pb-4 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10 px-6">
         <div>
           {submissionTime && (
             <span>Listed {formatDate(submissionTime)}</span>
@@ -249,7 +256,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs hover:text-hawaii-teal"
+              className="h-8 text-xs hover:text-hawaii-teal"
               onClick={() => setIsExpanded(!isExpanded)}
             >
               {isExpanded ? "Show less" : "Show more"}
@@ -259,7 +266,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
           <Button
             variant="default"
             size="sm"
-            className="h-7 text-xs futuristic-button"
+            className="h-8 text-xs futuristic-button"
             onClick={() => window.open(ipfsGatewayUrl, "_blank")}
           >
             <ExternalLink className="h-3.5 w-3.5 mr-1" />
@@ -271,7 +278,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs"
+              className="h-8 text-xs"
               onClick={handleActionInitiate}
               disabled={isLoading || item.status === "Absent"}
             >
