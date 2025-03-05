@@ -532,14 +532,27 @@ export async function challengeRequest(itemID: string, evidence: string = ""): P
     // Create contract instance
     const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
     
-    // Get item info to determine request details
-    const itemInfo = await contract.methods.items(itemID).call();
+    // Get the request count - ensure it returns a number
+    const requestCountResult = await contract.methods.getNumberOfRequests(itemID).call();
+    if (!requestCountResult) {
+      throw new Error("Failed to retrieve request count");
+    }
     
-    if (!itemInfo) {
+    const requestCount = Number(requestCountResult);
+    
+    if (requestCount === 0) {
+      throw new Error("No request found for this item");
+    }
+    
+    // Get item info (need to cast to known shape)
+    const itemResult = await contract.methods.items(itemID).call();
+    
+    if (!itemResult) {
       throw new Error("Failed to retrieve item information");
     }
     
-    const itemStatus = Number(itemInfo.status);
+    // Access status and ensure it's a number
+    const itemStatus = Number(itemResult.status);
     
     if (isNaN(itemStatus)) {
       throw new Error("Failed to retrieve valid item status");
@@ -547,9 +560,9 @@ export async function challengeRequest(itemID: string, evidence: string = ""): P
     
     // Determine which deposit to use based on item status
     let depositInfo;
-    if (itemStatus === 1) { // Registration requested
+    if (itemStatus === 1) {
       depositInfo = await getSubmissionChallengeDepositAmount();
-    } else if (itemStatus === 3) { // Clearing requested
+    } else if (itemStatus === 3) {
       depositInfo = await getRemovalChallengeDepositAmount();
     } else {
       throw new Error("Item not in a challengeable state");
@@ -560,8 +573,10 @@ export async function challengeRequest(itemID: string, evidence: string = ""): P
       (evidence.startsWith("/ipfs/") ? evidence : `/ipfs/${evidence}`) : 
       "";
     
+    const requestID = requestCount - 1;
+    
     // Estimate gas and get current gas price
-    const gasEstimate = await contract.methods.challengeRequest(itemID, formattedEvidence).estimateGas({ 
+    const gasEstimate = await contract.methods.challengeRequest(itemID, requestID, formattedEvidence).estimateGas({ 
       from,
       value: depositInfo.depositInWei 
     });
@@ -575,7 +590,7 @@ export async function challengeRequest(itemID: string, evidence: string = ""): P
     const gasPriceString = gasPrice.toString();
     
     // Submit challenge transaction
-    const txReceipt = await contract.methods.challengeRequest(itemID, formattedEvidence).send({
+    const txReceipt = await contract.methods.challengeRequest(itemID, requestID, formattedEvidence).send({
       from,
       gas: gasWithBuffer,
       gasPrice: gasPriceString,
