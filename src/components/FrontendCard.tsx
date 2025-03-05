@@ -9,6 +9,7 @@ import { ExternalLink, Copy, Database, Github, CircuitBoard, Waves, CheckCircle,
 import { useState } from "react";
 import { toast } from "sonner";
 import { connectWallet, switchToMainnet } from "@/lib/web3";
+import { EvidenceModal } from "./EvidenceModal";
 
 interface FrontendCardProps {
   item: LItem;
@@ -17,6 +18,8 @@ interface FrontendCardProps {
 export function FrontendCard({ item }: FrontendCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEvidenceModalOpen, setIsEvidenceModalOpen] = useState(false);
+  const [currentAction, setCurrentAction] = useState<"remove" | "challenge">("remove");
   
   const props = item.metadata.props;
   const name = getPropValue(props, "Name");
@@ -49,40 +52,57 @@ export function FrontendCard({ item }: FrontendCardProps) {
   
   const statusInfo = getStatusInfo(item.status);
 
-  // Handle the button click based on the status
-  const handleAction = async () => {
+  // Handle the initial button click based on the status
+  const handleActionInitiate = async () => {
     try {
-      setIsLoading(true);
-      
       // First ensure wallet is connected and on mainnet
       const account = await connectWallet();
       const isMainnet = await switchToMainnet();
       
       if (!isMainnet) {
         toast.error("Please switch to Ethereum Mainnet to continue");
-        setIsLoading(false);
         return;
       }
 
-      // Import removeItem and challengeRequest functions dynamically
+      // Set the current action based on status
+      if (item.status === "Registered") {
+        setCurrentAction("remove");
+      } else if (item.status === "RegistrationRequested" || item.status === "ClearingRequested") {
+        setCurrentAction("challenge");
+      } else {
+        toast.error("No action available for this status");
+        return;
+      }
+      
+      // Open evidence modal
+      setIsEvidenceModalOpen(true);
+    } catch (error: any) {
+      console.error("Action error:", error);
+      toast.error(error.message || "Failed to connect wallet");
+    }
+  };
+
+  // Handle the actual action after evidence is submitted
+  const handleEvidenceSubmit = async (ipfsURI: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Import action functions dynamically
       const { removeItem, challengeRequest } = await import("@/lib/web3");
       
       // Different actions based on status
-      switch (item.status) {
-        case "Registered":
-          // Request to remove item
-          await removeItem(item.data);
-          toast.success("Removal request submitted successfully");
-          break;
-        case "RegistrationRequested":
-        case "ClearingRequested":
-          // Challenge the current request
-          await challengeRequest(item.data);
-          toast.success("Challenge submitted successfully");
-          break;
-        default:
-          toast.error("No action available for this status");
+      if (currentAction === "remove") {
+        // Request to remove item with evidence
+        await removeItem(item.data, ipfsURI);
+        toast.success("Removal request submitted successfully");
+      } else if (currentAction === "challenge") {
+        // Challenge the current request with evidence
+        await challengeRequest(item.data, ipfsURI);
+        toast.success("Challenge submitted successfully");
       }
+      
+      // Close modal
+      setIsEvidenceModalOpen(false);
     } catch (error: any) {
       console.error("Action error:", error);
       toast.error(error.message || "Failed to perform action");
@@ -253,7 +273,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
               variant="outline"
               size="sm"
               className="h-7 text-xs"
-              onClick={handleAction}
+              onClick={handleActionInitiate}
               disabled={isLoading || item.status === "Absent"}
             >
               {isLoading ? (
@@ -270,7 +290,16 @@ export function FrontendCard({ item }: FrontendCardProps) {
           )}
         </div>
       </CardFooter>
+
+      {/* Evidence Modal */}
+      <EvidenceModal
+        isOpen={isEvidenceModalOpen}
+        onClose={() => setIsEvidenceModalOpen(false)}
+        onEvidenceSubmit={handleEvidenceSubmit}
+        title={currentAction === "remove" ? "Provide Removal Evidence" : "Provide Challenge Evidence"}
+        action={currentAction}
+        isLoading={isLoading}
+      />
     </Card>
   );
 }
-

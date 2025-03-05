@@ -453,7 +453,7 @@ export async function submitToRegistry(ipfsPath: string): Promise<string> {
   }
 }
 
-export async function removeItem(itemID: string): Promise<string> {
+export async function removeItem(itemID: string, evidence: string = ""): Promise<string> {
   if (!window.ethereum) {
     throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
   }
@@ -472,8 +472,13 @@ export async function removeItem(itemID: string): Promise<string> {
     // Create contract instance
     const contract = new web3.eth.Contract(LCURATE_ABI as any, CONTRACT_ADDRESS);
     
+    // Format evidence URL - ensure it starts with "/ipfs/"
+    const formattedEvidence = evidence ? 
+      (evidence.startsWith("/ipfs/") ? evidence : `/ipfs/${evidence}`) : 
+      "";
+    
     // Estimate gas and get current gas price
-    const gasEstimate = await contract.methods.removeItem(itemID).estimateGas({ 
+    const gasEstimate = await contract.methods.removeItem(itemID, formattedEvidence).estimateGas({ 
       from,
       value: depositInWei 
     });
@@ -487,7 +492,7 @@ export async function removeItem(itemID: string): Promise<string> {
     const gasPriceString = gasPrice.toString();
     
     // Submit transaction with the dynamic deposit amount
-    const txReceipt = await contract.methods.removeItem(itemID).send({
+    const txReceipt = await contract.methods.removeItem(itemID, formattedEvidence).send({
       from,
       gas: gasWithBuffer,
       gasPrice: gasPriceString,
@@ -511,7 +516,7 @@ export async function removeItem(itemID: string): Promise<string> {
   }
 }
 
-export async function challengeRequest(itemID: string): Promise<string> {
+export async function challengeRequest(itemID: string, evidence: string = ""): Promise<string> {
   if (!window.ethereum) {
     throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
   }
@@ -529,25 +534,31 @@ export async function challengeRequest(itemID: string): Promise<string> {
     
     // Get the request count - ensure it returns a number
     const requestCountResult = await contract.methods.getNumberOfRequests(itemID).call();
+    if (!requestCountResult) {
+      throw new Error("Failed to retrieve request count");
+    }
+    
     const requestCount = Number(requestCountResult);
     
     if (requestCount === 0) {
       throw new Error("No request found for this item");
     }
     
-    // Get item status to determine which deposit amount to use
-    const itemResult = await contract.methods.items(itemID).call() as Item;
+    // Get item info (need to cast to known shape)
+    const itemResult = await contract.methods.items(itemID).call();
     
     if (!itemResult) {
       throw new Error("Failed to retrieve item information");
     }
     
+    // Access status and ensure it's a number
     const itemStatus = Number(itemResult.status);
     
     if (isNaN(itemStatus)) {
       throw new Error("Failed to retrieve valid item status");
     }
     
+    // Determine which deposit to use based on item status
     let depositInfo;
     if (itemStatus === 1) {
       depositInfo = await getSubmissionChallengeDepositAmount();
@@ -557,10 +568,15 @@ export async function challengeRequest(itemID: string): Promise<string> {
       throw new Error("Item not in a challengeable state");
     }
     
+    // Format evidence URL - ensure it starts with "/ipfs/"
+    const formattedEvidence = evidence ? 
+      (evidence.startsWith("/ipfs/") ? evidence : `/ipfs/${evidence}`) : 
+      "";
+    
     const requestID = requestCount - 1;
     
     // Estimate gas and get current gas price
-    const gasEstimate = await contract.methods.challengeRequest(itemID, requestID).estimateGas({ 
+    const gasEstimate = await contract.methods.challengeRequest(itemID, requestID, formattedEvidence).estimateGas({ 
       from,
       value: depositInfo.depositInWei 
     });
@@ -574,7 +590,7 @@ export async function challengeRequest(itemID: string): Promise<string> {
     const gasPriceString = gasPrice.toString();
     
     // Submit challenge transaction
-    const txReceipt = await contract.methods.challengeRequest(itemID, requestID).send({
+    const txReceipt = await contract.methods.challengeRequest(itemID, requestID, formattedEvidence).send({
       from,
       gas: gasWithBuffer,
       gasPrice: gasPriceString,
