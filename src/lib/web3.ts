@@ -68,18 +68,24 @@ export async function getSubmissionDepositAmount(): Promise<{
     console.log("Arbitrator extra data:", arbitratorExtraData);
     
     // Step 3: Create Kleros Liquid arbitrator contract instance
-    const arbitratorContract = new web3.eth.Contract(KLEROS_LIQUID_ABI as any, arbitratorAddress);
-    
-    // Step 4: Get actual arbitration cost
+    // Check if arbitratorAddress is a valid string
     let arbitrationCost;
-    try {
-      arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
-      console.log("Arbitration cost from contract:", arbitrationCost);
-    } catch (error) {
-      console.error("Error getting arbitration cost:", error);
-      // Fallback to estimated value if there's an error
+    if (arbitratorAddress && typeof arbitratorAddress === 'string') {
+      try {
+        const arbitratorContract = new web3.eth.Contract(KLEROS_LIQUID_ABI as any, arbitratorAddress);
+        
+        // Step 4: Get actual arbitration cost
+        arbitrationCost = await arbitratorContract.methods.arbitrationCost(arbitratorExtraData).call();
+        console.log("Arbitration cost from contract:", arbitrationCost);
+      } catch (error) {
+        console.error("Error getting arbitration cost:", error);
+        // Fallback to estimated value if there's an error
+        arbitrationCost = web3.utils.toWei("0.05", "ether");
+        console.log("Using fallback arbitration cost:", arbitrationCost);
+      }
+    } else {
+      console.warn("Invalid arbitrator address, using fallback value");
       arbitrationCost = web3.utils.toWei("0.05", "ether");
-      console.log("Using fallback arbitration cost:", arbitrationCost);
     }
     
     // Step 5: Calculate total deposit (submission deposit + arbitration cost)
