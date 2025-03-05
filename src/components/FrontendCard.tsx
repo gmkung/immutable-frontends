@@ -238,14 +238,14 @@ export function FrontendCard({ item }: FrontendCardProps) {
         )}
         
         {additionalInfo !== "N/A" && (
-          <div className="w-full flex justify-start">
+          <div className="w-full flex justify-center">
             <Button
               variant="ghost"
               size="sm"
               className="h-8 text-xs hover:text-hawaii-teal px-0"
               onClick={() => setIsExpanded(!isExpanded)}
             >
-              {isExpanded ? "Show less" : "Show more"}
+              {isExpanded ? "▲" : "▼"}
             </Button>
           </div>
         )}
