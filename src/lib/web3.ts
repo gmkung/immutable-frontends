@@ -477,6 +477,9 @@ export async function removeItem(itemID: string, evidence: string = ""): Promise
       (evidence.startsWith("/ipfs/") ? evidence : `/ipfs/${evidence}`) : 
       "";
     
+    // The itemID is already in bytes32 format, we don't need to convert it
+    // Just pass it directly to the contract method
+    
     // Estimate gas and get current gas price
     const gasEstimate = await contract.methods.removeItem(itemID, formattedEvidence).estimateGas({ 
       from,
@@ -544,14 +547,15 @@ export async function challengeRequest(itemID: string, evidence: string = ""): P
       throw new Error("No request found for this item");
     }
     
-    // Get item info (need to cast to known shape)
+    // Get item info
     const itemResult = await contract.methods.items(itemID).call();
     
     if (!itemResult) {
       throw new Error("Failed to retrieve item information");
     }
     
-    // Access status and ensure it's a number
+    // Access status directly from the returned object
+    // The contract returns an object with properties, not an array
     const itemStatus = Number(itemResult.status);
     
     if (isNaN(itemStatus)) {
