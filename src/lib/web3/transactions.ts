@@ -34,11 +34,11 @@ export async function removeItem(itemID: string, evidenceURI: string): Promise<v
     // Convert ETH to Wei for the transaction
     const depositWei = web3.utils.toWei(depositAmount, 'ether');
     
-    // Submit transaction - use number for gas
+    // Submit transaction - use string for gas (converted from number)
     await registry.methods.removeItem(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
-      gas: 500000
+      gas: "500000"
     });
     
   } catch (error) {
@@ -66,14 +66,19 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
     }
     
     // Safely get the number of requests
-    const requestsCount = itemInfo.numberOfRequests;
-    const requestID = requestsCount && typeof requestsCount === 'object' 
-      ? parseInt(requestsCount.toString() || "0") - 1
-      : typeof requestsCount === 'number' 
-        ? requestsCount - 1 
-        : typeof requestsCount === 'string' 
-          ? parseInt(requestsCount) - 1 
-          : 0;
+    let requestID = 0;
+    if (itemInfo && typeof itemInfo === 'object') {
+      const requestsCount = itemInfo.numberOfRequests;
+      if (requestsCount) {
+        if (typeof requestsCount === 'object') {
+          requestID = parseInt(requestsCount.toString() || "0") - 1;
+        } else if (typeof requestsCount === 'number') {
+          requestID = requestsCount - 1;
+        } else if (typeof requestsCount === 'string') {
+          requestID = parseInt(requestsCount) - 1;
+        }
+      }
+    }
     
     // Get request info
     const requestInfo = await registry.methods.getRequestInfo(itemID, requestID).call();
@@ -82,15 +87,15 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
     }
     
     // Check if parties property exists and is an array with at least 2 elements
-    if (!requestInfo.parties || !Array.isArray(requestInfo.parties) || requestInfo.parties.length < 2) {
-      throw new Error("Invalid request info structure");
-    }
-    
-    // Determine which deposit to use based on the current request status
     let depositAmount: string;
     
     // Safely access the parties array
-    if (requestInfo.parties[1] === ZERO_ADDRESS) {
+    if (requestInfo && 
+        typeof requestInfo === 'object' && 
+        requestInfo.parties && 
+        Array.isArray(requestInfo.parties) && 
+        requestInfo.parties.length >= 2 && 
+        requestInfo.parties[1] === ZERO_ADDRESS) {
       // This is a registration request (submitter is in position 0)
       depositAmount = await getSubmissionChallengeDepositAmount();
     } else {
@@ -110,11 +115,11 @@ export async function challengeRequest(itemID: string, evidenceURI: string): Pro
     // Convert ETH to Wei for the transaction
     const depositWei = web3.utils.toWei(depositAmount, 'ether');
     
-    // Submit transaction - use number for gas
+    // Submit transaction - use string for gas (converted from number)
     await registry.methods.challengeRequest(itemID, formattedEvidence).send({
       from: accounts[0],
       value: depositWei,
-      gas: 500000
+      gas: "500000"
     });
     
   } catch (error) {
@@ -144,11 +149,11 @@ export async function submitItem(itemString: string): Promise<void> {
     // Convert ETH to Wei for the transaction
     const depositWei = web3.utils.toWei(depositInfo.depositAmount, 'ether');
 
-    // Submit transaction - use number for gas
+    // Submit transaction - use string for gas (converted from number)
     await registry.methods.addItem(itemString).send({
       from: accounts[0],
       value: depositWei,
-      gas: 500000
+      gas: "500000"
     });
   } catch (error) {
     console.error("Error submitting item:", error);
