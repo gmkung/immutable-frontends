@@ -11,6 +11,11 @@ declare global {
 
 const CONTRACT_ADDRESS = "0xda03509Bb770061A61615AD8Fc8e1858520eBd86"; // Kleros Curate TCR Address
 
+interface Item {
+  status: string | number;
+  // Add other properties if needed
+}
+
 export async function connectWallet(): Promise<string> {
   if (!window.ethereum) {
     throw new Error("MetaMask is not installed. Please install MetaMask to continue.");
@@ -531,7 +536,7 @@ export async function challengeRequest(itemID: string): Promise<string> {
     }
     
     // Get item status to determine which deposit amount to use
-    const itemResult = await contract.methods.items(itemID).call();
+    const itemResult = await contract.methods.items(itemID).call() as Item;
     
     if (!itemResult) {
       throw new Error("Failed to retrieve item information");
