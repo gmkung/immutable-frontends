@@ -27,20 +27,19 @@ export function FrontendCardFooter({
 }: FrontendCardFooterProps) {
   return (
     <CardFooter className="flex flex-col space-y-4 pt-4 pb-4 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10 px-6">
-      {/* First row: Submission time */}
-      {submissionTime && (
-        <div className="w-full text-left">
+      {/* First row: Submission time and Action buttons */}
+      <div className="w-full flex justify-between items-center">
+        {submissionTime && (
           <span>Listed {formatDate(submissionTime)}</span>
-        </div>
-      )}
-      
-      {/* Second row: Action buttons */}
-      <ActionButtons 
-        status={status}
-        ipfsGatewayUrl={ipfsGatewayUrl}
-        onActionInitiate={onActionInitiate}
-        isLoading={isLoading}
-      />
+        )}
+        
+        <ActionButtons 
+          status={status}
+          ipfsGatewayUrl={ipfsGatewayUrl}
+          onActionInitiate={onActionInitiate}
+          isLoading={isLoading}
+        />
+      </div>
       
       {/* Show more button at the bottom */}
       {additionalInfo !== "N/A" && (

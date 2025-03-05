@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Trash2, Ban } from "lucide-react";
-import { useState } from "react";
 
 interface ActionButtonsProps {
   status: string;
@@ -41,7 +40,7 @@ export function ActionButtons({
   };
   
   return (
-    <div className="w-full flex flex-wrap gap-2 justify-end">
+    <div className="flex gap-2">
       <Button
         variant="default"
         size="sm"
