@@ -31,10 +31,13 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="flex items-start gap-3">
-            <Database className="h-5 w-5 mt-0.5 text-primary" />
-            <div>
+        <div className="space-y-6 py-2">
+          {/* Data Source Section */}
+          <div className="flex items-start">
+            <div className="flex-shrink-0 w-8">
+              <Database className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-grow">
               <h3 className="font-medium">Data Source</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 This registry is powered by data from the Kleros Curate TCR system on the Ethereum mainnet.
@@ -49,9 +52,12 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <CheckCircle className="h-5 w-5 mt-0.5 text-primary" />
-            <div>
+          {/* Optimistic Curation Section */}
+          <div className="flex items-start">
+            <div className="flex-shrink-0 w-8">
+              <CheckCircle className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-grow">
               <h3 className="font-medium">Optimistic Curation</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 This registry uses an optimistic system where entries are accepted by default unless challenged. Users submit refundable deposits to attest to data correctness. If challenged, Kleros Court provides decentralized arbitration, with the winner receiving their deposit back plus a reward from the loser's deposit.
@@ -59,9 +65,12 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
             </div>
           </div>
 
-          <div className="flex items-start gap-3">
-            <Shield className="h-5 w-5 mt-0.5 text-primary" />
-            <div>
+          {/* Smart Contract Section */}
+          <div className="flex items-start">
+            <div className="flex-shrink-0 w-8">
+              <Shield className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-grow">
               <h3 className="font-medium">Smart Contract</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Registry Contract Address:
