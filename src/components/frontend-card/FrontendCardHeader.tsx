@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Waves } from "lucide-react";
@@ -9,13 +8,15 @@ interface FrontendCardHeaderProps {
   description: string;
   networkName: string;
   status: string;
+  disputed?: boolean;
 }
 
 export function FrontendCardHeader({ 
   name, 
   description, 
   networkName, 
-  status 
+  status,
+  disputed,
 }: FrontendCardHeaderProps) {
   return (
     <CardHeader className="pb-2 relative">
@@ -28,6 +29,12 @@ export function FrontendCardHeader({
             </Badge>
             
             <StatusBadge status={status} />
+            
+            {disputed && (
+              <Badge variant="outline" className="bg-red-500/10 text-red-500 backdrop-blur-sm border-red-500/20">
+                Disputed
+              </Badge>
+            )}
           </div>
           <CardTitle className="text-xl font-semibold mt-2">{name}</CardTitle>
           <CardDescription className="line-clamp-2 mt-2">

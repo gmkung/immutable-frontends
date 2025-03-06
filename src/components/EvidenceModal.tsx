@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -6,13 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadJSONToIPFS } from "@/lib/ipfs";
 import { toast } from "sonner";
-import { getRemovalDepositAmount } from "@/lib/web3";
-
-interface DepositBreakdown {
-  removalBaseDeposit: string;
-  arbitrationCost: string;
-  total: string;
-}
+import { getRemovalDepositAmount, DepositInfo } from "@/lib/web3";
 
 interface EvidenceModalProps {
   isOpen: boolean;
@@ -34,7 +27,7 @@ export function EvidenceModal({
   const [evidenceTitle, setEvidenceTitle] = useState("");
   const [evidenceDescription, setEvidenceDescription] = useState("");
   const [isUploading, setIsUploading] = useState(false);
-  const [depositBreakdown, setDepositBreakdown] = useState<DepositBreakdown | null>(null);
+  const [depositBreakdown, setDepositBreakdown] = useState<DepositInfo["breakdown"] | null>(null);
   const [isLoadingDeposit, setIsLoadingDeposit] = useState(false);
 
   useEffect(() => {
@@ -140,7 +133,7 @@ export function EvidenceModal({
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Base Deposit:</span>
-                    <span>{depositBreakdown.removalBaseDeposit} ETH</span>
+                    <span>{depositBreakdown.baseDeposit} ETH</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Arbitration Cost:</span>

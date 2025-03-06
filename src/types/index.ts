@@ -44,6 +44,7 @@ export interface LItem {
   metadata: LItemMetadata;
   requests: LRequest[];
   status: string;
+  disputed: boolean;
 }
 
 export interface LRegistry {

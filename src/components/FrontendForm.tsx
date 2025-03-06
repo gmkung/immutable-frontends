@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -6,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ItemData, SubmissionStatus } from "@/types";
 import { validateForm, stringToBuffer } from "@/lib/utils";
 import { uploadJSONToIPFS } from "@/lib/ipfs";
-import { connectWallet, submitToRegistry, handleWeb3Error, switchToMainnet, getSubmissionDepositAmount } from "@/lib/web3";
+import { connectWallet, submitToRegistry, handleWeb3Error, switchToMainnet, getSubmissionDepositAmount, DepositInfo } from "@/lib/web3";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,11 +38,11 @@ export function FrontendForm() {
     txHash: null,
   });
   
-  const [depositAmount, setDepositAmount] = useState<string>("0.435");
-  const [depositBreakdown, setDepositBreakdown] = useState({
-    submissionBaseDeposit: "0.35",
-    arbitrationCost: "0.05",
-    total: "0.40"
+  const [depositAmount, setDepositAmount] = useState<string>("");
+  const [depositBreakdown, setDepositBreakdown] = useState<DepositInfo["breakdown"]>({
+    baseDeposit: "",
+    arbitrationCost: "",
+    total: ""
   });
   const [challengePeriodDays, setChallengePeriodDays] = useState<number>(7);
   const [isLoadingDeposit, setIsLoadingDeposit] = useState<boolean>(true);
@@ -251,7 +250,7 @@ export function FrontendForm() {
                           </TooltipContent>
                         </Tooltip>
                       </span>
-                      <span>{depositBreakdown.submissionBaseDeposit} ETH</span>
+                      <span>{depositBreakdown.baseDeposit} ETH</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center text-muted-foreground">

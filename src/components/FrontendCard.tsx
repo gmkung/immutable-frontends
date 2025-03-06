@@ -93,6 +93,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         description={description}
         networkName={networkName}
         status={item.status}
+        disputed={item.disputed}
       />
 
       <FrontendCardContent
