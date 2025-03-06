@@ -195,7 +195,7 @@ export function EvidenceModal({
                   : itemStatus === ItemStatus.RegistrationRequested
                     ? "This deposit is required to challenge a frontend's registration request."
                     : "This deposit is required to challenge a frontend's removal request."
-                } You'll be prompted to approve this transaction in your wallet.
+                } Your deposit is fully refundable if your claim is correct. You'll be prompted to approve this transaction in your wallet.
               </p>
             </div>
           )}

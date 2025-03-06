@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -7,7 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Info, ExternalLink, Database, Shield } from "lucide-react";
+import { Info, ExternalLink, Database, Shield, CheckCircle } from "lucide-react";
 
 interface AboutModalProps {
   open: boolean;
@@ -47,6 +46,16 @@ export function AboutModal({ open, onOpenChange }: AboutModalProps) {
               >
                 Visit Kleros Curate <ExternalLink className="h-3.5 w-3.5 ml-1" />
               </Button>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <CheckCircle className="h-5 w-5 mt-0.5 text-primary" />
+            <div>
+              <h3 className="font-medium">Optimistic Curation</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                This registry uses an optimistic system where entries are accepted by default unless challenged. Users submit refundable deposits to attest to data correctness. If challenged, Kleros Court provides decentralized arbitration, with the winner receiving their deposit back plus a reward from the loser's deposit.
+              </p>
             </div>
           </div>
 
