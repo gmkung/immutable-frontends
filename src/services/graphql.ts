@@ -8,6 +8,7 @@ const QUERY = `
   query GetFrontends {
     litems(
       first: 1000,
+      orderBy: latestRequestSubmissionTime
       orderDirection: desc,
       where: { 
         registry: "0xda03509bb770061a61615ad8fc8e1858520ebd86"

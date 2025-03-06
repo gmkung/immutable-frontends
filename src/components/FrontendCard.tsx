@@ -1,10 +1,9 @@
-
 import { LItem } from "@/types";
 import { getIPFSGatewayURL, getPropValue } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { useState } from "react";
 import { toast } from "sonner";
-import { connectWallet, switchToMainnet } from "@/lib/web3";
+import { connectWallet, switchToMainnet, ItemStatus } from "@/lib/web3";
 import { EvidenceModal } from "./EvidenceModal";
 import { FrontendCardHeader } from "./frontend-card/FrontendCardHeader";
 import { FrontendCardContent } from "./frontend-card/FrontendCardContent";
@@ -86,6 +85,17 @@ export function FrontendCard({ item }: FrontendCardProps) {
     setIsExpanded(!isExpanded);
   };
 
+  // Convert string status to numeric enum value
+  const getItemStatusValue = (status: string): number => {
+    switch (status) {
+      case "Absent": return ItemStatus.Absent;
+      case "Registered": return ItemStatus.Registered;
+      case "RegistrationRequested": return ItemStatus.RegistrationRequested;
+      case "ClearingRequested": return ItemStatus.ClearingRequested;
+      default: return -1; // Invalid status
+    }
+  };
+
   return (
     <Card className="glass-card overflow-hidden animate-slide-up w-full">
       <FrontendCardHeader
@@ -123,6 +133,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         title={currentAction === "remove" ? "Provide Removal Evidence" : "Provide Challenge Evidence"}
         action={currentAction}
         isLoading={isLoading}
+        itemStatus={getItemStatusValue(item.status)}
       />
     </Card>
   );

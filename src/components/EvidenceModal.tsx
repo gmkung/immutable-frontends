@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadJSONToIPFS } from "@/lib/ipfs";
 import { toast } from "sonner";
 import { getRemovalDepositAmount, DepositInfo } from "@/lib/web3";
+import { getSubmissionChallengeDepositAmount, getRemovalChallengeDepositAmount } from "@/lib/web3";
+import { ItemStatus } from "@/lib/web3";
 
 interface EvidenceModalProps {
   isOpen: boolean;
@@ -14,6 +16,7 @@ interface EvidenceModalProps {
   title: string;
   action: "remove" | "challenge";
   isLoading: boolean;
+  itemStatus?: number;
 }
 
 export function EvidenceModal({
@@ -22,7 +25,8 @@ export function EvidenceModal({
   onEvidenceSubmit,
   title,
   action,
-  isLoading
+  isLoading,
+  itemStatus
 }: EvidenceModalProps) {
   const [evidenceTitle, setEvidenceTitle] = useState("");
   const [evidenceDescription, setEvidenceDescription] = useState("");
@@ -31,15 +35,38 @@ export function EvidenceModal({
   const [isLoadingDeposit, setIsLoadingDeposit] = useState(false);
 
   useEffect(() => {
-    // Only fetch deposit amount when modal is open and action is "remove"
-    if (isOpen && action === "remove") {
+    // Fetch deposit amount when modal is open
+    console.log(action)
+    console.log(itemStatus)
+    if (isOpen && (action === "remove" || action === "challenge")) {
       const fetchDepositAmount = async () => {
         try {
           setIsLoadingDeposit(true);
-          const depositInfo = await getRemovalDepositAmount();
-          setDepositBreakdown(depositInfo.breakdown);
+          let depositInfo;
+          
+          if (action === "remove") {
+            // For removal requests
+            depositInfo = await getRemovalDepositAmount();
+          } else if (action === "challenge") {
+            // For challenge requests, use the appropriate deposit based on item status
+            if (itemStatus === ItemStatus.RegistrationRequested) {
+              // Challenge a registration request
+              depositInfo = await getSubmissionChallengeDepositAmount();
+            } else if (itemStatus === ItemStatus.ClearingRequested) {
+              // Challenge a removal request
+              depositInfo = await getRemovalChallengeDepositAmount();
+            } else {
+              console.error("Invalid item status for challenge:", itemStatus);
+              toast.error("Cannot determine deposit amount for this item status");
+              return;
+            }
+          }
+          
+          if (depositInfo) {
+            setDepositBreakdown(depositInfo.breakdown);
+          }
         } catch (error) {
-          console.error("Failed to fetch deposit amount:", error);
+          console.error(`Failed to fetch ${action} deposit amount:`, error);
           toast.error("Failed to fetch deposit information");
         } finally {
           setIsLoadingDeposit(false);
@@ -48,7 +75,7 @@ export function EvidenceModal({
 
       fetchDepositAmount();
     }
-  }, [isOpen, action]);
+  }, [isOpen, action, itemStatus]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +121,17 @@ export function EvidenceModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {action === "remove" ? (
+              "Provide evidence to support your removal request for this registered frontend."
+            ) : itemStatus === ItemStatus.RegistrationRequested ? (
+              "Provide evidence to challenge this frontend's registration request."
+            ) : itemStatus === ItemStatus.ClearingRequested ? (
+              "Provide evidence to challenge this frontend's removal request."
+            ) : (
+              "Provide evidence to support your action."
+            )}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -124,9 +162,13 @@ export function EvidenceModal({
             />
           </div>
           
-          {action === "remove" && (
+          {(action === "remove" || action === "challenge") && (
             <div className="p-4 bg-secondary/30 rounded-md">
-              <h3 className="text-sm font-medium mb-2">Deposit Required:</h3>
+              <h3 className="text-sm font-medium mb-2">
+                {action === "remove" ? "Removal Request Deposit:" : 
+                 itemStatus === ItemStatus.RegistrationRequested ? "Registration Challenge Deposit:" :
+                 "Removal Challenge Deposit:"}
+              </h3>
               {isLoadingDeposit ? (
                 <div className="text-sm text-muted-foreground">Loading deposit information...</div>
               ) : depositBreakdown ? (
@@ -148,7 +190,12 @@ export function EvidenceModal({
                 <div className="text-sm text-muted-foreground">Failed to load deposit information</div>
               )}
               <p className="mt-2 text-xs text-muted-foreground">
-                This deposit will be required to submit your removal request. You'll be prompted to approve this transaction in your wallet.
+                {action === "remove" 
+                  ? "This deposit is required to submit your removal request for a registered frontend."
+                  : itemStatus === ItemStatus.RegistrationRequested
+                    ? "This deposit is required to challenge a frontend's registration request."
+                    : "This deposit is required to challenge a frontend's removal request."
+                } You'll be prompted to approve this transaction in your wallet.
               </p>
             </div>
           )}

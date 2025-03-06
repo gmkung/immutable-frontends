@@ -455,20 +455,6 @@ export async function challengeRequest(
       depositInfo = await getRemovalChallengeDepositAmount();
     }
 
-    // Get the request count
-    const requestCountResult = await contract.methods
-      .getNumberOfRequests(itemID)
-      .call();
-    if (!requestCountResult) {
-      throw new Error("Failed to retrieve request count");
-    }
-
-    const requestCount = Number(requestCountResult);
-
-    if (requestCount === 0) {
-      throw new Error("No request found for this item");
-    }
-
     // Format evidence URL
     const formattedEvidence = evidence
       ? evidence.startsWith("/ipfs/")
@@ -476,11 +462,9 @@ export async function challengeRequest(
         : `/ipfs/${evidence}`
       : "";
 
-    const requestID = requestCount - 1;
-
     // Estimate gas and get current gas price
     const gasEstimate = await contract.methods
-      .challengeRequest(itemID, requestID, formattedEvidence)
+      .challengeRequest(itemID, formattedEvidence)
       .estimateGas({
         from,
         value: depositInfo.depositInWei,
@@ -493,7 +477,7 @@ export async function challengeRequest(
 
     // Submit challenge transaction
     const txReceipt = await contract.methods
-      .challengeRequest(itemID, requestID, formattedEvidence)
+      .challengeRequest(itemID, formattedEvidence)
       .send({
         from,
         gas: gasWithBuffer,
