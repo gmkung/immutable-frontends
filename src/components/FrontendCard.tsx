@@ -97,7 +97,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
   };
 
   return (
-    <Card className="glass-card overflow-hidden animate-slide-up w-full">
+    <Card className="glass-card overflow-hidden animate-slide-up w-full break-all break-inside-avoid mb-6">
       <FrontendCardHeader
         name={name}
         description={description}
