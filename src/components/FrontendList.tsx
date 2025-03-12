@@ -13,7 +13,7 @@ export function FrontendList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   useEffect(() => {
     const loadFrontends = async () => {
       try {
@@ -28,21 +28,21 @@ export function FrontendList() {
         setLoading(false);
       }
     };
-    
+
     loadFrontends();
   }, []);
-  
+
   const filteredFrontends = frontends.filter(frontend => {
     const query = searchQuery.toLowerCase();
     const props = frontend.metadata.props;
-    
+
     // Search across all properties
-    return props.some(prop => 
-      prop.value && 
+    return props.some(prop =>
+      prop.value &&
       prop.value.toString().toLowerCase().includes(query)
     );
   });
-  
+
   return (
     <Container className="py-8">
       <div className="relative mb-6">
@@ -57,7 +57,7 @@ export function FrontendList() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      
+
       {loading ? (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -82,7 +82,7 @@ export function FrontendList() {
           </p>
         </div>
       ) : (
-        <div className="columns-1 md:columns-2 lg:columns-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredFrontends.map((frontend) => (
             <FrontendCard key={frontend.itemID} item={frontend} />
           ))}
