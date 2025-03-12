@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getCurrentAccount, formatWalletAddress, connectWallet } from "@/lib/web3";
-import { Database, PlusCircle, Wallet, Waves, Palmtree, Info } from "lucide-react";
+import { PlusCircle, Wallet, Waves, Palmtree, Info } from "lucide-react";
 import { toast } from "sonner";
 import { AboutModal } from "@/components/AboutModal";
 
