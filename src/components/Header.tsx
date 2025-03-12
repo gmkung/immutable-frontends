@@ -1,3 +1,9 @@
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
@@ -12,37 +18,37 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const location = useLocation();
-  
+
   useEffect(() => {
     const checkConnection = async () => {
       const currentAccount = await getCurrentAccount();
       setAccount(currentAccount);
     };
-    
+
     checkConnection();
-    
+
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts: string[]) => {
         setAccount(accounts[0] || null);
       });
     }
-    
+
     return () => {
       if (window.ethereum) {
         window.ethereum.removeAllListeners("accountsChanged");
       }
     };
   }, []);
-  
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
-    
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-  
+
   const handleConnect = async () => {
     try {
       const address = await connectWallet();
@@ -52,12 +58,11 @@ export function Header() {
       toast.error(error.message);
     }
   };
-  
+
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300 backdrop-blur-xl ${
-        scrolled ? "bg-background/70 shadow-sm" : "bg-transparent"
-      }`}
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300 backdrop-blur-xl ${scrolled ? "bg-background/70 shadow-sm" : "bg-transparent"
+        }`}
     >
       <Container className="flex items-center justify-between">
         <div className="flex items-center space-x-1">
@@ -69,7 +74,7 @@ export function Header() {
             <span className="gradient-text">Immutable Frontends</span>
           </Link>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
@@ -80,7 +85,7 @@ export function Header() {
             <Info className="h-4 w-4 mr-1" />
             About
           </Button>
-          
+
           {location.pathname !== "/submit" && (
             <Button asChild variant="outline" size="sm" className="gap-1 neon-border">
               <Link to="/submit">
@@ -89,12 +94,12 @@ export function Header() {
               </Link>
             </Button>
           )}
-          
+
           <Button
             variant={account ? "outline" : "default"}
             size="sm"
             className={cn(
-              "gap-1", 
+              "gap-1",
               account ? "neon-border" : "futuristic-button"
             )}
             onClick={handleConnect}
@@ -104,8 +109,8 @@ export function Header() {
           </Button>
         </div>
       </Container>
-      
-      <AboutModal 
+
+      <AboutModal
         open={aboutModalOpen}
         onOpenChange={setAboutModalOpen}
       />

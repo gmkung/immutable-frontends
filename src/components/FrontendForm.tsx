@@ -52,13 +52,18 @@ export function FrontendForm() {
     const fetchDepositAmount = async () => {
       try {
         setIsLoadingDeposit(true);
-        const { depositAmount, breakdown, challengePeriodDays } = await getSubmissionDepositAmount();
-        console.log("Fetched deposit amount:", depositAmount);
-        console.log("Breakdown:", breakdown);
-        console.log("Challenge period days:", challengePeriodDays);
-        setDepositAmount(depositAmount);
-        setDepositBreakdown(breakdown);
-        setChallengePeriodDays(challengePeriodDays);
+        // Make sure registry is initialized
+        if (typeof getSubmissionDepositAmount === 'function') {
+          const { depositAmount, breakdown, challengePeriodDays } = await getSubmissionDepositAmount();
+          console.log("Fetched deposit amount:", depositAmount);
+          console.log("Breakdown:", breakdown);
+          console.log("Challenge period days:", challengePeriodDays);
+          setDepositAmount(depositAmount);
+          setDepositBreakdown(breakdown);
+          setChallengePeriodDays(challengePeriodDays);
+        } else {
+          console.error("getSubmissionDepositAmount is not a function");
+        }
       } catch (error) {
         console.error("Error fetching deposit amount:", error);
         // Keep the default value

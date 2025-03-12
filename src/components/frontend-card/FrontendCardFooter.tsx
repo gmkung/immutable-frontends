@@ -1,4 +1,3 @@
-
 import { CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
@@ -14,6 +13,7 @@ interface FrontendCardFooterProps {
   additionalInfo: string;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  disputed: boolean;
 }
 
 export function FrontendCardFooter({ 
@@ -24,7 +24,8 @@ export function FrontendCardFooter({
   isLoading,
   additionalInfo,
   isExpanded,
-  onToggleExpand
+  onToggleExpand,
+  disputed
 }: FrontendCardFooterProps) {
   return (
     <CardFooter className="flex flex-col space-y-4 pt-4 pb-4 text-xs text-muted-foreground border-t border-hawaii-teal/10 relative z-10 px-6">
@@ -42,6 +43,7 @@ export function FrontendCardFooter({
           ipfsGatewayUrl={ipfsGatewayUrl}
           onActionInitiate={onActionInitiate}
           isLoading={isLoading}
+          disputed={disputed}
         />
       </div>
       

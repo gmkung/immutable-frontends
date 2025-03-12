@@ -5,9 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { uploadJSONToIPFS } from "@/lib/ipfs";
 import { toast } from "sonner";
-import { getRemovalDepositAmount, DepositInfo } from "@/lib/web3";
-import { getSubmissionChallengeDepositAmount, getRemovalChallengeDepositAmount } from "@/lib/web3";
-import { ItemStatus } from "@/lib/web3";
+import { 
+  getRemovalDepositAmount,
+  getSubmissionChallengeDepositAmount,
+  getRemovalChallengeDepositAmount,
+  ItemStatus,
+  type DepositInfo 
+} from "@/lib/web3";
 
 interface EvidenceModalProps {
   isOpen: boolean;

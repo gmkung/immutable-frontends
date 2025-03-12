@@ -8,6 +8,7 @@ import { EvidenceModal } from "./EvidenceModal";
 import { FrontendCardHeader } from "./frontend-card/FrontendCardHeader";
 import { FrontendCardContent } from "./frontend-card/FrontendCardContent";
 import { FrontendCardFooter } from "./frontend-card/FrontendCardFooter";
+import { registry } from "@/lib/registry";
 
 interface FrontendCardProps {
   item: LItem;
@@ -34,6 +35,11 @@ export function FrontendCard({ item }: FrontendCardProps) {
 
   const handleActionInitiate = async () => {
     try {
+      if (item.disputed) {
+        toast.error("No actions available for disputed items");
+        return;
+      }
+
       const account = await connectWallet();
       const isMainnet = await switchToMainnet();
 
@@ -54,7 +60,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
       setIsEvidenceModalOpen(true);
     } catch (error: any) {
       console.error("Action error:", error);
-      toast.error(error.message || "Failed to connect wallet");
+      toast.error(registry.handleWeb3Error(error));
     }
   };
 
@@ -75,7 +81,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
       setIsEvidenceModalOpen(false);
     } catch (error: any) {
       console.error("Action error:", error);
-      toast.error(error.message || "Failed to perform action");
+      toast.error(registry.handleWeb3Error(error));
     } finally {
       setIsLoading(false);
     }
@@ -124,6 +130,7 @@ export function FrontendCard({ item }: FrontendCardProps) {
         additionalInfo={additionalInfo}
         isExpanded={isExpanded}
         onToggleExpand={handleToggleExpand}
+        disputed={item.disputed}
       />
 
       <EvidenceModal

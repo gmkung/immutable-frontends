@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Trash2, Ban } from "lucide-react";
 
@@ -7,13 +6,15 @@ interface ActionButtonsProps {
   ipfsGatewayUrl: string;
   onActionInitiate: () => Promise<void>;
   isLoading: boolean;
+  disputed: boolean;
 }
 
-export function ActionButtons({ 
-  status, 
-  ipfsGatewayUrl, 
-  onActionInitiate, 
-  isLoading 
+export function ActionButtons({
+  status,
+  ipfsGatewayUrl,
+  onActionInitiate,
+  isLoading,
+  disputed
 }: ActionButtonsProps) {
   const getActionButtonText = () => {
     switch (status) {
@@ -38,7 +39,7 @@ export function ActionButtons({
         return null;
     }
   };
-  
+
   return (
     <div className="flex gap-2">
       <Button
@@ -55,9 +56,10 @@ export function ActionButtons({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 text-xs"
+          className={`h-8 text-xs ${disputed ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={onActionInitiate}
-          disabled={isLoading || status === "Absent"}
+          disabled={isLoading || status === "Absent" || disputed}
+          title={disputed ? "No actions available for disputed items" : ""}
         >
           {isLoading ? (
             <span className="flex items-center">
