@@ -219,13 +219,13 @@ export function FrontendForm() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium flex items-center">
-                    Required deposit:
+                    Required deposit (Ethereum Mainnet):
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <HelpCircle className="h-3 w-3 ml-1 cursor-help text-muted-foreground/70" />
                       </TooltipTrigger>
                       <TooltipContent side="right" className="max-w-xs z-50">
-                        <p>This deposit amount will be refunded after the challenge period ({challengePeriodDays} days) if your submission is not challenged or if you win any challenges.</p>
+                        <p>This deposit amount will be refunded after the challenge period ({challengePeriodDays} days) if your submission is not challenged or if you win any challenges. The registry operates on Ethereum Mainnet.</p>
                       </TooltipContent>
                     </Tooltip>
                   </span>
