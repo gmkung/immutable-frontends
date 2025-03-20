@@ -41,7 +41,7 @@ export function ActionButtons({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex justify-between w-full">
       <Button
         variant="default"
         size="sm"
