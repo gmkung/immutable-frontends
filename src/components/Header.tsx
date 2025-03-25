@@ -9,14 +9,16 @@ import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getCurrentAccount, formatWalletAddress, connectWallet } from "@/lib/web3";
-import { PlusCircle, Wallet, Waves, Palmtree, Info } from "lucide-react";
+import { PlusCircle, Wallet, Waves, Palmtree, Info, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { AboutModal } from "@/components/AboutModal";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export function Header() {
   const [account, setAccount] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -74,8 +76,9 @@ export function Header() {
             <span className="gradient-text">Immutable Frontends</span>
           </Link>
         </div>
-
-        <div className="flex items-center gap-3">
+        
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
@@ -108,6 +111,63 @@ export function Header() {
             {account ? formatWalletAddress(account) : "Connect Wallet"}
           </Button>
         </div>
+        
+        {/* Mobile Menu Button */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon" className="h-9 w-9 p-0">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[80%] max-w-sm backdrop-blur-xl bg-background/90">
+            <div className="flex flex-col gap-4 mt-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start gap-1 h-auto py-2"
+                onClick={() => {
+                  setAboutModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Info className="h-4 w-4 mr-2" />
+                About
+              </Button>
+              
+              {location.pathname !== "/submit" && (
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  size="sm" 
+                  className="justify-start gap-1 h-auto py-2 neon-border"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/submit">
+                    <PlusCircle className="h-4 w-4 mr-2" />
+                    Submit Frontend
+                  </Link>
+                </Button>
+              )}
+              
+              <Button
+                variant={account ? "outline" : "default"}
+                size="sm"
+                className={cn(
+                  "justify-start gap-1 h-auto py-2", 
+                  account ? "neon-border" : "futuristic-button"
+                )}
+                onClick={() => {
+                  handleConnect();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Wallet className="h-4 w-4 mr-2" />
+                {account ? formatWalletAddress(account) : "Connect Wallet"}
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </Container>
 
       <AboutModal
