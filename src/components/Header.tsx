@@ -9,7 +9,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getCurrentAccount, formatWalletAddress, connectWallet } from "@/lib/web3";
-import { PlusCircle, Wallet, Waves, Palmtree, Info } from "lucide-react";
+import { PlusCircle, Wallet, Zap, Shield, Info } from "lucide-react";
 import { toast } from "sonner";
 import { AboutModal } from "@/components/AboutModal";
 
@@ -61,17 +61,17 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300 backdrop-blur-xl ${scrolled ? "bg-background/70 shadow-sm" : "bg-transparent"
+      className={`fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300 backdrop-blur-xl ${scrolled ? "bg-background/70 shadow-sm border-b border-gothic-ash/20" : "bg-transparent"
         }`}
     >
       <Container className="flex items-center justify-between">
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-2">
           <div className="relative">
-            <Waves className="h-6 w-6 text-hawaii-teal animate-wave" />
-            <Palmtree className="h-4 w-4 text-hawaii-green absolute -top-0.5 -right-1.5" />
+            <Zap className="h-6 w-6 text-gothic-violet animate-flicker" />
+            <Shield className="h-4 w-4 text-gothic-gold absolute -top-1 -right-1 animate-glow" />
           </div>
-          <Link to="/" className="font-medium text-lg flex items-center gap-x-1.5">
-            <span className="gradient-text">Immutable Frontends</span>
+          <Link to="/" className="font-gothic font-medium text-lg flex items-center gap-x-1.5">
+            <span className="gradient-text shadow-text">Immutable Frontends</span>
           </Link>
         </div>
 
@@ -79,7 +79,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1"
+            className="gap-1 text-gothic-silver hover:text-gothic-platinum hover:bg-gothic-slate/30"
             onClick={() => setAboutModalOpen(true)}
           >
             <Info className="h-4 w-4 mr-1" />
@@ -87,7 +87,7 @@ export function Header() {
           </Button>
 
           {location.pathname !== "/submit" && (
-            <Button asChild variant="outline" size="sm" className="gap-1 neon-border">
+            <Button asChild variant="outline" size="sm" className="gap-1 gothic-border text-gothic-platinum hover:bg-gothic-violet/20">
               <Link to="/submit">
                 <PlusCircle className="h-4 w-4 mr-1" />
                 Submit Frontend
@@ -100,7 +100,7 @@ export function Header() {
             size="sm"
             className={cn(
               "gap-1",
-              account ? "neon-border" : "futuristic-button"
+              account ? "gothic-border text-gothic-platinum hover:bg-gothic-violet/20" : "gothic-button"
             )}
             onClick={handleConnect}
           >
